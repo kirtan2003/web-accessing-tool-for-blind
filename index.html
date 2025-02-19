@@ -1,0 +1,4637 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speech Recognition with AI Response</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=E3YMIL1b"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/google-tts-api/dist/index.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script>
+      // Define different color themes
+      const colorThemes = {
+        theme1: {
+          bodyBackground: "#9FB6E2",
+          buttonBackground: "#f1bb83",
+          buttonBorder: "#800080",
+          outputBorder: "#000000",
+          outputBackground: "#f1bb83",
+          outputText: "#000000",
+          actionBorder: "#000000",
+          actionBackground: "#f1bb83",
+          actionText: "#000000",
+        },
+        theme2: {
+          bodyBackground: "#905971",
+          buttonBackground: "#E09ADA",
+          buttonBorder: "#000000",
+          outputBorder: "#000000",
+          outputBackground: "#E0D09C",
+          outputText: "#000000",
+          actionBorder: "#000000",
+          actionBackground: "#E0D09C",
+          actionText: "#000000",
+        },
+        theme3: {
+          bodyBackground: "#905971",
+          buttonBackground: "#905971",
+          buttonBorder: "#ffffff",
+          outputBorder: "#000000",
+          outputBackground: "#F9D372",
+          outputText: "#000000",
+          actionBorder: "#000000",
+          actionBackground: "#F9D372",
+          actionText: "#000000",
+        },
+      };
+
+      // Function to apply the selected color theme
+      function applyColorTheme(theme) {
+        console.log("Applying color theme:", theme);
+        const colors = colorThemes[theme];
+        // document.body.style.backgroundColor = colors.bodyBackground;
+        document.querySelectorAll(".mic-btn button").forEach((btn) => {
+          btn.style.backgroundColor = colors.buttonBackground;
+          btn.style.borderColor = colors.buttonBorder;
+        });
+        document.getElementById("output").style.borderColor =
+          colors.outputBorder;
+        document.getElementById("output").style.backgroundColor =
+          colors.outputBackground;
+        document.getElementById("output").style.color = colors.outputText;
+        document.getElementById("action").style.borderColor =
+          colors.actionBorder;
+        document.getElementById("action").style.backgroundColor =
+          colors.actionBackground;
+        document.getElementById("action").style.color = colors.actionText;
+        // document.getElementById('mic-btn').style.color = colors.bodyBackground;
+      }
+
+      // Apply the initial color theme
+      applyColorTheme("theme1");
+    </script>
+  </head>
+  <body>
+    <audio src="game_audio.mp3" class="sound"></audio>
+    <!-- Sound for actions -->
+
+    <div class="lang">
+      <div class="language">
+        <span class="lang-text">Please Select A Language: </span>
+        <span class="lang-dropdown">
+          <select id="language">
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="mr">Marathi</option>
+            <option value="gu">Gujarati</option>
+            <option value="pa">Punjabi</option>
+            <option value="sd">Sindhi</option>
+            <option value="bn">Bengali</option>
+            <option value="te">Telugu</option>
+            <option value="ta">Tamil</option>
+            <option value="ur">Urdu</option>
+          </select>
+        </span>
+      </div>
+      <div class="color-buttons">
+        <button id="theme1" onclick="applyColorTheme('theme1')">Theme 1</button>
+        <button id="theme2" onclick="applyColorTheme('theme2')">Theme 2</button>
+        <button id="theme3" onclick="applyColorTheme('theme3')">Theme 3</button>
+      </div>
+    </div>
+
+    <div class="mic-btn">
+      <button onclick="startRecognition()">
+        <i class="fas fa-microphone"></i>
+      </button>
+    </div>
+    <div id="output"></div>
+    <div id="action"></div>
+
+    <script>
+      var recognition;
+      var isGreetingSpoken = false; // Flag to track whether the greeting message has been spoken
+      var speechSpeed = 1.0; // Initial speech speed
+
+      function startRecognition() {
+        selectedLanguage = document.getElementById("language").value;
+        recognition = new webkitSpeechRecognition();
+        recognition.lang = selectedLanguage;
+        recognition.continuous = false; // Prevent continuous recognition
+        recognition.interimResults = false; // Turn off interim results
+        recognition.onresult = function (event) {
+          var transcript = event.results[0][0].transcript.trim().toLowerCase();
+          document.getElementById("output").innerHTML =
+            "<div class='search-query'><b>Spoken Text: </b>" +
+            transcript +
+            "</div>";
+
+          if (isGreetingSpoken) {
+            playSound();
+            handleCommands(transcript);
+          } else {
+            speak("h", selectedLanguage);
+            isGreetingSpoken = true;
+          }
+        };
+
+        if (!isGreetingSpoken) {
+          speak("h", selectedLanguage);
+          isGreetingSpoken = true;
+        } else {
+          recognition.start();
+        }
+      }
+
+      function handleCommands(transcript) {
+  transcript = transcript.trim();
+  if (
+    transcript.includes("wikipedia") ||
+    transcript.includes("विकिपीडिया") ||
+    transcript.includes("વિકિપીડિયા") ||
+    transcript.includes("ਵਿਕੀਪੀਡੀਆ") ||
+    transcript.includes("وڪيپيڊيا") ||
+    transcript.includes("উইকিপিডিয়া") ||
+    transcript.includes("వికీపీడియా") ||
+    transcript.includes("விக்கிப்பீடியா") ||
+    transcript.includes("ویکیپیڈیا")
+  ) {
+    getSearchQuery(selectedLanguage);
+  } else if (
+    transcript.includes("ask") ||
+    transcript.includes("पूछिए") ||
+    transcript.includes("विचार") ||
+    transcript.includes("પૂછો") ||
+    transcript.includes("ਪੁੱਛੋ") ||
+    transcript.includes("سوال کریں") ||
+    transcript.includes("জিজ্ঞাসা") ||
+    transcript.includes("అడుగు") ||
+    transcript.includes("வினவு") ||
+    transcript.includes("پوچھنا")
+  ) {
+    getQuestion(selectedLanguage);
+  } else if (transcript.includes("notes")) {
+    speak("Please provide a file name for the note.", selectedLanguage);
+    takeFileName(selectedLanguage);
+  } else if (transcript.includes("help")) {
+    speak(
+      "Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed' and to change language, say 'change language'.",
+      selectedLanguage
+    );
+  } else if (transcript.includes("increase speed")) {
+    speechSpeed += 2;
+    speak("Speech speed increased.", selectedLanguage);
+  } else if (transcript.includes("decrease speed")) {
+    speechSpeed -= 2;
+    speak("Speech speed decreased.", selectedLanguage);
+  } else if (transcript.includes("stop")) {
+    speakandstop("Execution aborted", selectedLanguage);
+    recognition.abort();
+  } else if (
+    transcript.includes("change language") ||
+    transcript.includes("भाषा बदलें") ||
+    transcript.includes("ભાષા બદલો") ||
+    transcript.includes("ਭਾਸ਼ਾ ਬਦਲੋ") ||
+    transcript.includes("زبان تبدیل کریں") ||
+    transcript.includes("ভাষা পরিবর্তন") ||
+    transcript.includes("భాషానిర్వచనం") ||
+    transcript.includes("மொழிமாற்றம்") ||
+    transcript.includes("زبان بدلیں")
+  ) {
+    changeLanguage();
+  }
+}
+
+      var languageOptions = {
+  "hindi": "hi",
+  "english": "en",
+  "marathi" : "mr",
+  "gujarati" : "gu",
+  "punjabi" : "pa",
+  "tamil" : "ta",
+  "telugu" : "te",
+  "bengali" : "bn",
+  "sindhi" : "sd",
+  "urdu" : "ur",
+  // Add more language options as needed
+};
+
+function changeLanguage() {
+  recognition.stop();
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = selectedLanguage;
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.onresult = function (event) {
+    var spokenLanguage = event.results[0][0].transcript
+      .trim()
+      .toLowerCase();
+    console.log("Spoken Language:", spokenLanguage); // Log the spoken language
+    if (Object.keys(languageOptions).includes(spokenLanguage)) {
+      selectedLanguage = languageOptions[spokenLanguage];
+      var languageDropdown = document.getElementById("language");
+      for (var i = 0; i < languageDropdown.options.length; i++) {
+        if (languageDropdown.options[i].value === selectedLanguage) {
+          languageDropdown.selectedIndex = i;
+          break;
+        }
+      }
+      document.getElementById("output").innerHTML +=
+        "<div class='instruction'><b>Language changed to:</b> " +
+        spokenLanguage +
+        "</div>";
+        playSound();
+        startRecognition();
+      applyColorTheme(selectedLanguage); // Change color theme if needed
+      
+    //   speakandstop("Language changed to " + spokenLanguage, selectedLanguage);
+      
+    } else {
+      speak(
+        "Sorry, I didn't recognize that language. Please try again.",
+        selectedLanguage
+      );
+    }
+    startRecognition(); // Restart recognition after handling language change
+  };
+  
+  var languageOptionsText = Object.keys(languageOptions).join(", ");
+  speak("Which language would you like to change to? Available options are: " + languageOptionsText, selectedLanguage);
+  document.getElementById("output").innerHTML +=
+    "<div class='instruction'><b>Which language would you like to change to? Available options are: " + languageOptionsText + "</b></div>";
+  recognition.start();
+}
+
+      function playSound() {
+        var audio = document.querySelector(".sound");
+        audio.play(); // Play the sound
+      }
+
+      function takeFileName(selectedLanguage) {
+        recognition.stop();
+
+        var innerRecognition = new webkitSpeechRecognition();
+        innerRecognition.lang = selectedLanguage;
+        innerRecognition.continuous = false;
+        innerRecognition.interimResults = false;
+
+        innerRecognition.onerror = function (event) {
+          console.error(
+            "Error occurred during filename recognition:",
+            event.error
+          );
+          speak(
+            "An error occurred during filename recognition. Please try again.",
+            selectedLanguage
+          );
+        };
+
+        innerRecognition.onresult = function (event) {
+          console.log("Notes in function");
+          var fileName = event.results[0][0].transcript.trim();
+          console.log('Transcript for "filename" command:', fileName); // Log the transcript
+          document.getElementById("output").innerHTML +=
+            "<div class='instruction'><b>File name:</b> " + fileName + "</div>";
+          takeNoteContent(selectedLanguage, fileName);
+        };
+
+        document.getElementById("output").innerHTML +=
+          "<div class='searching'><b>File Name:</b></div>";
+
+        innerRecognition.start();
+      }
+
+      function takeNoteContent(selectedLanguage, fileName) {
+        // Declare recognition for note content input
+        var noteRecognition = new webkitSpeechRecognition();
+        noteRecognition.lang = selectedLanguage;
+        noteRecognition.continuous = false; // Stop recognition after capturing the note content
+        noteRecognition.interimResults = false;
+        function handleNoteContentResponse(event) {
+          var response = event.results[0][0].transcript.trim();
+          if (response !== "") {
+            document.getElementById("output").innerHTML +=
+              "<div class='instruction'><b>Note content:</b> " +
+              response +
+              "</div>";
+            sendNoteToBackend(fileName, response, selectedLanguage);
+          } else {
+            speak(
+              "I'm sorry, I didn't catch that. Please provide the content for the note.",
+              selectedLanguage
+            );
+            document.getElementById("output").innerHTML +=
+              "<div class='instruction'><b>Please say the note content:</b></div>";
+            takeNoteContent(selectedLanguage, fileName); // Retry if no response
+          }
+        }
+        noteRecognition.onresult = handleNoteContentResponse;
+
+        noteRecognition.start(); // Start recognition for note content
+
+        // Function to handle user's response for note content
+      }
+
+      function speakWithDelay(message, selectedLanguage, delay) {
+        // Mute the microphone
+        recognition.stop();
+
+        // Speak the message after the specified delay
+        setTimeout(function () {
+          speak(message, selectedLanguage);
+          // Restart recognition after speaking is finished
+          setTimeout(function () {
+            recognition.start();
+          }, 1000); // Delay to start recognition after speaking
+        }, delay); // Delay to speak the message
+      }
+      var isMicMuted = false; // Flag to track whether the microphone is muted
+
+      // Function to temporarily mute the microphone for a specified duration
+      function muteMicForDuration(duration) {
+        isMicMuted = true; // Set the flag to true to indicate that the microphone is muted
+        setTimeout(function () {
+          isMicMuted = false; // Unset the flag after the specified duration
+        }, duration);
+      }
+
+      function getQuestion(selectedLanguage) {
+        var innerRecognition = new webkitSpeechRecognition();
+        innerRecognition.lang = selectedLanguage;
+        innerRecognition.continuous = false;
+        innerRecognition.interimResults = false;
+        innerRecognition.onresult = function (event) {
+          var question = event.results[0][0].transcript.trim();
+          console.log('Transcript for "ask" command:', question); // Log the transcript
+          document.getElementById("output").innerHTML +=
+            "<div class='instruction'><b>Question:</b> " + question + "</div>";
+            playSound();
+          sendVoiceToPythonForGemini(question, selectedLanguage);
+        };
+
+        document.getElementById("output").innerHTML +=
+          "<div class='searching'><b>Ask your question:</b></div>";
+
+        innerRecognition.start();
+      }
+
+      function getSearchQuery(selectedLanguage) {
+        recognition.stop();
+        var innerRecognition = new webkitSpeechRecognition();
+        innerRecognition.lang = selectedLanguage;
+        innerRecognition.continuous = false;
+        innerRecognition.interimResults = false;
+        innerRecognition.onresult = function (event) {
+          var searchQuery = event.results[0][0].transcript.trim();
+          document.getElementById("output").innerHTML +=
+            "<div class='searchinig'><b>Search Query:</b> " +
+            searchQuery +
+            "</div>";
+          playSound();
+          sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage);
+        };
+        // speak("Ask your question", selectedLanguage);
+        document.getElementById("output").innerHTML +=
+          "<div class='instruction'><b>Say your search query for Wikipedia:</b></div>";
+
+        innerRecognition.start();
+      }
+
+      // Function to get Wikipedia summary
+      //   function sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage) {
+      //     var xhr = new XMLHttpRequest();
+      //     xhr.open("POST", "http://localhost:5000/wiki_summary");
+      //     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+      //     xhr.onreadystatechange = function () {
+      //       if (xhr.readyState === 4 && xhr.status === 200) {
+      //         var response = JSON.parse(xhr.responseText);
+      //         document.getElementById("action").innerHTML =
+      //           "<div class='search-query'><b>Wikipedia Summary:</b> " +
+      //           response.summary +
+      //           "</div>";
+      //         speakWithMute(response.summary, selectedLanguage); // Speak the Wikipedia summary
+      //         // translateSummary(response.summary, selectedLanguage);
+      //         saveToTextFile(searchQuery + ": " + response.summary); // Save to text file
+      //         startRecognition(); // Start recognition again after response
+      //       }
+      //     };
+      //     var data = JSON.stringify({
+      //       search_query: searchQuery,
+      //       selected_language: selectedLanguage,
+      //     });
+      //     xhr.send(data);
+
+      //   }
+
+      //   // Function to get Gemini response
+      //   function sendVoiceToPythonForGemini(question, selectedLanguage) {
+
+      //     var xhr = new XMLHttpRequest();
+
+      //     xhr.open("POST", "http://localhost:5000/gemini");
+      //     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+      //     xhr.onreadystatechange = function () {
+      //       if (xhr.readyState === 4 && xhr.status === 200) {
+      //         var response = JSON.parse(xhr.responseText);
+      //         document.getElementById("action").innerHTML =
+      //           "<div class='search-query'><b>Response:</b> " +
+      //           response.ai_response +
+      //           "</div>";
+      //         speak(response.ai_response, selectedLanguage); // Speak the Gemini response
+      //         saveToTextFile(question + ": " + response.ai_response); // Save to text file
+      //         startRecognition(); // Start recognition again after response
+      //       }
+      //     };
+
+      //     var data = JSON.stringify({
+      //       gemini: question,
+      //       selected_language: selectedLanguage,
+      //     });
+
+      //     xhr.send(data);
+      //   }
+      // Function to get Wikipedia summary
+      var questionAndSearchQueries = []; // Array to store questions and search queries
+
+      // Function to get Wikipedia summary
+      function sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://localhost:5000/wiki_summary");
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML =
+              "<div class='search-query'><b>Wikipedia Summary:</b> " +
+              response.summary +
+              "</div>";
+            speakWithMute(response.summary, selectedLanguage); // Speak the Wikipedia summary
+            // Push searchQuery to the array
+            questionAndSearchQueries.push(searchQuery);
+            startSaveToTextFileTimer(); // Start or reset the timer for saving to text file
+            startRecognition(); // Start recognition again after response
+          }
+        };
+        var data = JSON.stringify({
+          search_query: searchQuery,
+          selected_language: selectedLanguage,
+        });
+        xhr.send(data);
+      }
+
+      // Function to get Gemini response
+      function sendVoiceToPythonForGemini(question, selectedLanguage) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://localhost:5000/gemini");
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML =
+              "<div class='search-query'><b>Response:</b> " +
+              response.ai_response +
+              "</div>";
+            speak(response.ai_response, selectedLanguage); // Speak the Gemini response
+            // Push question to the array
+            questionAndSearchQueries.push(question);
+            startSaveToTextFileTimer(); // Start or reset the timer for saving to text file
+            startRecognition(); // Start recognition again after response
+          }
+        };
+        var data = JSON.stringify({
+          gemini: question,
+          selected_language: selectedLanguage,
+        });
+        xhr.send(data);
+      }
+
+      // Start or reset the timer for saving to text file
+      function startSaveToTextFileTimer() {
+        if (!saveToTextFileTimer) {
+          // If the timer doesn't exist, create one
+          saveToTextFileTimer = setInterval(saveToTextFile, 10000); // Fire every 20 seconds
+        } else {
+          // If the timer exists, reset it
+          clearInterval(saveToTextFileTimer);
+          saveToTextFileTimer = setInterval(saveToTextFile, 10000); // Fire every 20 seconds
+        }
+      }
+
+      // Function to save questions and search queries to text file
+      function saveToTextFile() {
+        if (questionAndSearchQueries.length > 0) {
+          var xhr = new XMLHttpRequest();
+          xhr.open("POST", "http://localhost:5001/save_to_file");
+          xhr.setRequestHeader(
+            "Content-Type",
+            "application/json;charset=UTF-8"
+          );
+          xhr.send(JSON.stringify({ data: questionAndSearchQueries }));
+          // Clear the array after saving
+          questionAndSearchQueries = [];
+        }
+      }
+
+      var saveToTextFileTimer; // Timer variable for saving to text file
+
+      // Function to speak and mute the microphone while speaking
+      function speakWithMute(message, selectedLanguage) {
+        // Mute the microphone
+        recognition.stop();
+
+        // Speak the message
+        var utterance = new SpeechSynthesisUtterance(message);
+        utterance.rate = speechSpeed; // Set the speech speed
+        utterance.lang = selectedLanguage; // Set the language for speech
+        utterance.onend = function () {
+          recognition.start(); // Start recognition after speaking is finished
+        };
+        window.speechSynthesis.speak(utterance);
+      }
+
+      function translateSummary(summary, selectedLanguage) {
+        // Display the translated summary
+        document.getElementById("action").innerHTML = summary;
+        speak(summary);
+      }
+
+      let retryCount = 0; // Track retries for filename recognition
+
+      function sendNoteToBackend(fileName, noteContent, selectedLanguage) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://localhost:5000/notes");
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            // Display response or handle as needed
+          }
+        };
+        var data = JSON.stringify({
+          file_name: fileName,
+          note_content: noteContent,
+          selected_language: selectedLanguage,
+        });
+        xhr.send(data);
+      }
+
+      function speak(text, selectedLanguage) {
+        var utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = speechSpeed; // Set the speech speed
+        utterance.lang = selectedLanguage; // Set the language for speech
+        utterance.onend = function () {
+          recognition.start(); // Start recognition after speaking is finished
+        };
+        window.speechSynthesis.speak(utterance);
+      }
+
+      function speakandstop(text, selectedLanguage) {
+        var utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = speechSpeed; // Set the speech speed
+        utterance.lang = selectedLanguage;
+        window.speechSynthesis.speak(utterance);
+      }
+
+      // Add this to your existing JavaScript code
+      document.addEventListener("keydown", function (event) {
+        if (event.keyCode === 38) {
+          // Up arrow key
+          changeFontSize(2); // Increase font size by 2px
+        } else if (event.keyCode === 40) {
+          // Down arrow key
+          changeFontSize(-2); // Decrease font size by 2px
+        }
+      });
+
+      function changeFontSize(changeAmount) {
+        var body = document.querySelector("body");
+        var currentSize = parseFloat(
+          window.getComputedStyle(body, null).getPropertyValue("font-size")
+        );
+        var newSize = currentSize + changeAmount;
+        body.style.fontSize = newSize + "px";
+
+        // Adjust font size of buttons
+        var buttons = document.querySelectorAll("button");
+        buttons.forEach(function (button) {
+          var currentButtonSize = parseFloat(
+            window.getComputedStyle(button, null).getPropertyValue("font-size")
+          );
+          var newButtonSize = currentButtonSize + changeAmount;
+          button.style.fontSize = newButtonSize + "px";
+        });
+
+        // Adjust font size of select and option elements
+        var select = document.getElementById("language");
+        var options = select.querySelectorAll("option");
+        select.style.fontSize = newSize + "px"; // Change select font size
+        options.forEach(function (option) {
+          option.style.fontSize = newSize + "px"; // Change option font size
+        });
+      }
+    </script>
+  </body>
+</html>
+
+<!-- works with history -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speech Recognition with AI Response</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <script src="https://code.responsivevoice.org/responsivevoice.js?key=E3YMIL1b"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/google-tts-api/dist/index.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script>
+      // Define different color themes
+      const colorThemes = {
+        theme1: {
+          bodyBackground: "#9FB6E2",
+          buttonBackground: "#f1bb83",
+          buttonBorder: "#800080",
+          outputBorder: "#000000",
+          outputBackground: "#f1bb83",
+          outputText: "#000000",
+          actionBorder: "#000000",
+          actionBackground: "#f1bb83",
+          actionText: "#000000",
+        },
+        theme2: {
+          bodyBackground: "#905971",
+          buttonBackground: "#E09ADA",
+          buttonBorder: "#000000",
+          outputBorder: "#000000",
+          outputBackground: "#E0D09C",
+          outputText: "#000000",
+          actionBorder: "#000000",
+          actionBackground: "#E0D09C",
+          actionText: "#000000",
+        },
+        theme3: {
+          bodyBackground: "#905971",
+          buttonBackground: "#905971",
+          buttonBorder: "#ffffff",
+          outputBorder: "#000000",
+          outputBackground: "#F9D372",
+          outputText: "#000000",
+          actionBorder: "#000000",
+          actionBackground: "#F9D372",
+          actionText: "#000000",
+        },
+      };
+
+      // Function to apply the selected color theme
+      function applyColorTheme(theme) {
+        console.log("Applying color theme:", theme);
+        const colors = colorThemes[theme];
+        // document.body.style.backgroundColor = colors.bodyBackground;
+        document.querySelectorAll(".mic-btn button").forEach((btn) => {
+          btn.style.backgroundColor = colors.buttonBackground;
+          btn.style.borderColor = colors.buttonBorder;
+        });
+        document.getElementById("output").style.borderColor =
+          colors.outputBorder;
+        document.getElementById("output").style.backgroundColor =
+          colors.outputBackground;
+        document.getElementById("output").style.color = colors.outputText;
+        document.getElementById("action").style.borderColor =
+          colors.actionBorder;
+        document.getElementById("action").style.backgroundColor =
+          colors.actionBackground;
+        document.getElementById("action").style.color = colors.actionText;
+        // document.getElementById('mic-btn').style.color = colors.bodyBackground;
+      }
+
+      // Apply the initial color theme
+      applyColorTheme("theme1");
+    </script>
+  </head>
+  <body>
+    <audio src="game_audio.mp3" class="sound"></audio>
+  
+
+    <div class="lang">
+      <div class="language">
+        <span class="lang-text">Please Select A Language: </span>
+        <span class="lang-dropdown">
+          <select id="language">
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="mr">Marathi</option>
+            <option value="gu">Gujarati</option>
+            <option value="pa">Punjabi</option>
+            <option value="sd">Sindhi</option>
+            <option value="bn">Bengali</option>
+            <option value="te">Telugu</option>
+            <option value="ta">Tamil</option>
+            <option value="ur">Urdu</option>
+          </select>
+        </span>
+      </div>
+      <div class="color-buttons">
+        <button id="theme1" onclick="applyColorTheme('theme1')">Theme 1</button>
+        <button id="theme2" onclick="applyColorTheme('theme2')">Theme 2</button>
+        <button id="theme3" onclick="applyColorTheme('theme3')">Theme 3</button>
+      </div>
+    </div>
+
+    <div class="mic-btn">
+      <button onclick="startRecognition()">
+        <i class="fas fa-microphone"></i>
+      </button>
+    </div>
+    <div id="output"></div>
+    <div id="action"></div>
+
+    <script>
+      var recognition;
+      var isGreetingSpoken = false; // Flag to track whether the greeting message has been spoken
+      var speechSpeed = 1.0; // Initial speech speed
+
+      function startRecognition() {
+        var selectedLanguage = document.getElementById("language").value;
+        recognition = new webkitSpeechRecognition();
+        recognition.lang = selectedLanguage;
+        recognition.continuous = false; // Prevent continuous recognition
+        recognition.interimResults = false; // Turn off interim results
+        recognition.onresult = function (event) {
+          var transcript = event.results[0][0].transcript.trim().toLowerCase();
+          document.getElementById("output").innerHTML =
+            "<div class='search-query'><b>Spoken Text: </b>" +
+            transcript +
+            "</div>";
+
+          if (isGreetingSpoken) {
+            // Start recognizing commands only after the greeting message has been spoken
+            playSound(); // Play sound after each action
+            if (
+              transcript.includes("wikipedia") ||
+              transcript.includes("विकिपीडिया") ||
+              transcript.includes("વિકિપીડિયા") ||
+              transcript.includes("ਵਿਕੀਪੀਡੀਆ") ||
+              transcript.includes("وڪيپيڊيا") ||
+              transcript.includes("উইকিপিডিয়া") ||
+              transcript.includes("వికీపీడియా") ||
+              transcript.includes("விக்கிப்பீடியா") ||
+              transcript.includes("ویکیپیڈیا")
+            ) {
+              getSearchQuery(selectedLanguage);
+            } else if (
+              transcript.includes("ask") ||
+              transcript.includes("पूछिए") ||
+              transcript.includes("विचार") ||
+              transcript.includes("પૂછો") ||
+              transcript.includes("ਪੁੱਛੋ") ||
+              transcript.includes("پڇو") ||
+              transcript.includes("জিজ্ঞাসা") ||
+              transcript.includes("అడుగు") ||
+              transcript.includes("வினவு") ||
+              transcript.includes("پوچھنا")
+            ) {
+              getQuestion(selectedLanguage);
+            }
+            if (transcript.includes("notes")) {
+              // If the user wants to take notes, prompt for file name
+              speak(
+                "Please provide a file name for the note.",
+                selectedLanguage
+              );
+              takeFileName(selectedLanguage);
+            } else if (transcript.includes("help")) {
+              speak(
+                "Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.",
+                selectedLanguage
+              );
+            } else if (transcript.includes("increase speed")) {
+              speechSpeed += 2;
+              speak("Speech speed increased.", selectedLanguage);
+            } else if (transcript.includes("decrease speed")) {
+              speechSpeed -= 2;
+              speak("Speech speed decreased.", selectedLanguage);
+            } else if (transcript.includes("stop")) {
+              speakandstop("Execution aborted", selectedLanguage);
+              recognition.abort();
+            }
+          }
+        };
+
+        if (!isGreetingSpoken) {
+          // If the greeting message hasn't been spoken yet, speak it
+          //speak("Hello, I am your voice assistant. Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.", selectedLanguage);
+          speak("h", selectedLanguage);
+          isGreetingSpoken = true; // Set the flag to true indicating that the greeting message has been spoken
+        } else {
+          // If the greeting message has already been spoken, start recognition directly
+          recognition.start();
+        }
+      }
+
+      function playSound() {
+        var audio = document.querySelector(".sound");
+        audio.play(); // Play the sound
+      }
+
+      function takeFileName(selectedLanguage) {
+        recognition.stop();
+
+        var innerRecognition = new webkitSpeechRecognition();
+        innerRecognition.lang = selectedLanguage;
+        innerRecognition.continuous = false;
+        innerRecognition.interimResults = false;
+
+        innerRecognition.onerror = function (event) {
+          console.error(
+            "Error occurred during filename recognition:",
+            event.error
+          );
+          speak(
+            "An error occurred during filename recognition. Please try again.",
+            selectedLanguage
+          );
+        };
+
+        innerRecognition.onresult = function (event) {
+          console.log("Notes in function");
+          var fileName = event.results[0][0].transcript.trim();
+          console.log('Transcript for "filename" command:', fileName); // Log the transcript
+          document.getElementById("output").innerHTML +=
+            "<div class='instruction'><b>File name:</b> " + fileName + "</div>";
+          takeNoteContent(selectedLanguage, fileName);
+        };
+
+        document.getElementById("output").innerHTML +=
+          "<div class='searching'><b>File Name:</b></div>";
+
+        innerRecognition.start();
+      }
+
+      function takeNoteContent(selectedLanguage, fileName) {
+        // Declare recognition for note content input
+        var noteRecognition = new webkitSpeechRecognition();
+        noteRecognition.lang = selectedLanguage;
+        noteRecognition.continuous = false; // Stop recognition after capturing the note content
+        noteRecognition.interimResults = false;
+        function handleNoteContentResponse(event) {
+          var response = event.results[0][0].transcript.trim();
+          if (response !== "") {
+            document.getElementById("output").innerHTML +=
+              "<div class='instruction'><b>Note content:</b> " +
+              response +
+              "</div>";
+            sendNoteToBackend(fileName, response, selectedLanguage);
+          } else {
+            speak(
+              "I'm sorry, I didn't catch that. Please provide the content for the note.",
+              selectedLanguage
+            );
+            document.getElementById("output").innerHTML +=
+              "<div class='instruction'><b>Please say the note content:</b></div>";
+            takeNoteContent(selectedLanguage, fileName); // Retry if no response
+          }
+        }
+        noteRecognition.onresult = handleNoteContentResponse;
+
+        noteRecognition.start(); // Start recognition for note content
+
+        // Function to handle user's response for note content
+      }
+
+      function speakWithDelay(message, selectedLanguage, delay) {
+        // Mute the microphone
+        recognition.stop();
+
+        // Speak the message after the specified delay
+        setTimeout(function () {
+          speak(message, selectedLanguage);
+          // Restart recognition after speaking is finished
+          setTimeout(function () {
+            recognition.start();
+          }, 1000); // Delay to start recognition after speaking
+        }, delay); // Delay to speak the message
+      }
+      var isMicMuted = false; // Flag to track whether the microphone is muted
+
+      // Function to temporarily mute the microphone for a specified duration
+      function muteMicForDuration(duration) {
+        isMicMuted = true; // Set the flag to true to indicate that the microphone is muted
+        setTimeout(function () {
+          isMicMuted = false; // Unset the flag after the specified duration
+        }, duration);
+      }
+
+      function getQuestion(selectedLanguage) {
+        var innerRecognition = new webkitSpeechRecognition();
+        innerRecognition.lang = selectedLanguage;
+        innerRecognition.continuous = false;
+        innerRecognition.interimResults = false;
+        innerRecognition.onresult = function (event) {
+          var question = event.results[0][0].transcript.trim();
+          console.log('Transcript for "ask" command:', question); // Log the transcript
+          document.getElementById("output").innerHTML +=
+            "<div class='instruction'><b>Question:</b> " + question + "</div>";
+          sendVoiceToPythonForGemini(question, selectedLanguage);
+        };
+
+        document.getElementById("output").innerHTML +=
+          "<div class='searching'><b>Ask your question:</b></div>";
+
+        innerRecognition.start();
+      }
+
+      function getSearchQuery(selectedLanguage) {
+        recognition.stop();
+        var innerRecognition = new webkitSpeechRecognition();
+        innerRecognition.lang = selectedLanguage;
+        innerRecognition.continuous = false;
+        innerRecognition.interimResults = false;
+        innerRecognition.onresult = function (event) {
+          var searchQuery = event.results[0][0].transcript.trim();
+          document.getElementById("output").innerHTML +=
+            "<div class='searchinig'><b>Search Query:</b> " +
+            searchQuery +
+            "</div>";
+          sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage);
+        };
+        // speak("Ask your question", selectedLanguage);
+        document.getElementById("output").innerHTML +=
+          "<div class='instruction'><b>Say your search query for Wikipedia:</b></div>";
+
+        innerRecognition.start();
+      }
+
+      // Function to get Wikipedia summary
+    //   function sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage) {
+    //     var xhr = new XMLHttpRequest();
+    //     xhr.open("POST", "http://localhost:5000/wiki_summary");
+    //     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    //     xhr.onreadystatechange = function () {
+    //       if (xhr.readyState === 4 && xhr.status === 200) {
+    //         var response = JSON.parse(xhr.responseText);
+    //         document.getElementById("action").innerHTML =
+    //           "<div class='search-query'><b>Wikipedia Summary:</b> " +
+    //           response.summary +
+    //           "</div>";
+    //         speakWithMute(response.summary, selectedLanguage); // Speak the Wikipedia summary
+    //         // translateSummary(response.summary, selectedLanguage);
+    //         saveToTextFile(searchQuery + ": " + response.summary); // Save to text file
+    //         startRecognition(); // Start recognition again after response
+    //       }
+    //     };
+    //     var data = JSON.stringify({
+    //       search_query: searchQuery,
+    //       selected_language: selectedLanguage,
+    //     });
+    //     xhr.send(data);
+        
+    //   }
+
+    //   // Function to get Gemini response
+    //   function sendVoiceToPythonForGemini(question, selectedLanguage) {
+        
+    //     var xhr = new XMLHttpRequest();
+
+    //     xhr.open("POST", "http://localhost:5000/gemini");
+    //     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    //     xhr.onreadystatechange = function () {
+    //       if (xhr.readyState === 4 && xhr.status === 200) {
+    //         var response = JSON.parse(xhr.responseText);
+    //         document.getElementById("action").innerHTML =
+    //           "<div class='search-query'><b>Response:</b> " +
+    //           response.ai_response +
+    //           "</div>";
+    //         speak(response.ai_response, selectedLanguage); // Speak the Gemini response
+    //         saveToTextFile(question + ": " + response.ai_response); // Save to text file
+    //         startRecognition(); // Start recognition again after response
+    //       }
+    //     };
+
+    //     var data = JSON.stringify({
+    //       gemini: question,
+    //       selected_language: selectedLanguage,
+    //     });
+
+    //     xhr.send(data);
+    //   }
+// Function to get Wikipedia summary
+var questionAndSearchQueries = []; // Array to store questions and search queries
+
+// Function to get Wikipedia summary
+function sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "http://localhost:5000/wiki_summary");
+  xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      var response = JSON.parse(xhr.responseText);
+      document.getElementById("action").innerHTML =
+        "<div class='search-query'><b>Wikipedia Summary:</b> " +
+        response.summary +
+        "</div>";
+      speakWithMute(response.summary, selectedLanguage); // Speak the Wikipedia summary
+      // Push searchQuery to the array
+      questionAndSearchQueries.push(searchQuery);
+      startSaveToTextFileTimer(); // Start or reset the timer for saving to text file
+      startRecognition(); // Start recognition again after response
+    }
+  };
+  var data = JSON.stringify({
+    search_query: searchQuery,
+    selected_language: selectedLanguage,
+  });
+  xhr.send(data);
+}
+
+// Function to get Gemini response
+function sendVoiceToPythonForGemini(question, selectedLanguage) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "http://localhost:5000/gemini");
+  xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      var response = JSON.parse(xhr.responseText);
+      document.getElementById("action").innerHTML =
+        "<div class='search-query'><b>Response:</b> " +
+        response.ai_response +
+        "</div>";
+      speak(response.ai_response, selectedLanguage); // Speak the Gemini response
+      // Push question to the array
+      questionAndSearchQueries.push(question);
+      startSaveToTextFileTimer(); // Start or reset the timer for saving to text file
+      startRecognition(); // Start recognition again after response
+    }
+  };
+  var data = JSON.stringify({
+    gemini: question,
+    selected_language: selectedLanguage,
+  });
+  xhr.send(data);
+}
+
+// Start or reset the timer for saving to text file
+function startSaveToTextFileTimer() {
+  if (!saveToTextFileTimer) {
+    // If the timer doesn't exist, create one
+    saveToTextFileTimer = setInterval(saveToTextFile, 10000); // Fire every 20 seconds
+  } else {
+    // If the timer exists, reset it
+    clearInterval(saveToTextFileTimer);
+    saveToTextFileTimer = setInterval(saveToTextFile, 10000); // Fire every 20 seconds
+  }
+}
+
+// Function to save questions and search queries to text file
+function saveToTextFile() {
+  if (questionAndSearchQueries.length > 0) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5001/save_to_file");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.send(JSON.stringify({ data: questionAndSearchQueries }));
+    // Clear the array after saving
+    questionAndSearchQueries = [];
+  }
+}
+
+var saveToTextFileTimer; // Timer variable for saving to text file
+
+
+      // Function to speak and mute the microphone while speaking
+      function speakWithMute(message, selectedLanguage) {
+        // Mute the microphone
+        recognition.stop();
+
+        // Speak the message
+        var utterance = new SpeechSynthesisUtterance(message);
+        utterance.rate = speechSpeed; // Set the speech speed
+        utterance.lang = selectedLanguage; // Set the language for speech
+        utterance.onend = function () {
+          recognition.start(); // Start recognition after speaking is finished
+        };
+        window.speechSynthesis.speak(utterance);
+      }
+
+      function translateSummary(summary, selectedLanguage) {
+        // Display the translated summary
+        document.getElementById("action").innerHTML = summary;
+        speak(summary);
+      }
+
+      let retryCount = 0; // Track retries for filename recognition
+
+      function sendNoteToBackend(fileName, noteContent, selectedLanguage) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://localhost:5000/notes");
+        xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            // Display response or handle as needed
+          }
+        };
+        var data = JSON.stringify({
+          file_name: fileName,
+          note_content: noteContent,
+          selected_language: selectedLanguage,
+        });
+        xhr.send(data);
+      }
+
+      function speak(text, selectedLanguage) {
+        var utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = speechSpeed; // Set the speech speed
+        utterance.lang = selectedLanguage; // Set the language for speech
+        utterance.onend = function () {
+          recognition.start(); // Start recognition after speaking is finished
+        };
+        window.speechSynthesis.speak(utterance);
+      }
+
+      function speakandstop(text, selectedLanguage) {
+        var utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = speechSpeed; // Set the speech speed
+        utterance.lang = selectedLanguage;
+        window.speechSynthesis.speak(utterance);
+      }
+
+      // Add this to your existing JavaScript code
+      document.addEventListener("keydown", function (event) {
+        if (event.keyCode === 38) {
+          // Up arrow key
+          changeFontSize(2); // Increase font size by 2px
+        } else if (event.keyCode === 40) {
+          // Down arrow key
+          changeFontSize(-2); // Decrease font size by 2px
+        }
+      });
+
+      function changeFontSize(changeAmount) {
+        var body = document.querySelector("body");
+        var currentSize = parseFloat(
+          window.getComputedStyle(body, null).getPropertyValue("font-size")
+        );
+        var newSize = currentSize + changeAmount;
+        body.style.fontSize = newSize + "px";
+
+        // Adjust font size of buttons
+        var buttons = document.querySelectorAll("button");
+        buttons.forEach(function (button) {
+          var currentButtonSize = parseFloat(
+            window.getComputedStyle(button, null).getPropertyValue("font-size")
+          );
+          var newButtonSize = currentButtonSize + changeAmount;
+          button.style.fontSize = newButtonSize + "px";
+        });
+
+        // Adjust font size of select and option elements
+        var select = document.getElementById("language");
+        var options = select.querySelectorAll("option");
+        select.style.fontSize = newSize + "px"; // Change select font size
+        options.forEach(function (option) {
+          option.style.fontSize = newSize + "px"; // Change option font size
+        });
+      }
+    </script>
+  </body>
+</html> -->
+
+<!-- works without history saving -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="https://code.responsivevoice.org/responsivevoice.js?key=E3YMIL1b"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/google-tts-api/dist/index.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+
+  // Define different color themes
+const colorThemes = {
+    theme1: {
+        bodyBackground: '#9FB6E2',
+        buttonBackground: '#f1bb83',
+        buttonBorder: '#800080',
+        outputBorder: '#000000',
+        outputBackground: '#f1bb83',
+        outputText: '#000000',
+        actionBorder: '#000000',
+        actionBackground: '#f1bb83',
+        actionText: '#000000'
+    },
+    theme2: {
+        bodyBackground: '#905971',
+        buttonBackground: '#E09ADA',
+        buttonBorder: '#000000',
+        outputBorder: '#000000',
+        outputBackground: '#E0D09C',
+        outputText: '#000000',
+        actionBorder: '#000000',
+        actionBackground: '#E0D09C',
+        actionText: '#000000'
+    },
+    theme3: {
+        bodyBackground: '#905971',
+        buttonBackground: '#905971',
+        buttonBorder: '#ffffff',
+        outputBorder: '#000000',
+        outputBackground: '#F9D372',
+        outputText: '#000000',
+        actionBorder: '#000000',
+        actionBackground: '#F9D372',
+        actionText: '#000000'
+    }
+};
+
+// Function to apply the selected color theme
+function applyColorTheme(theme) {
+    console.log('Applying color theme:', theme);
+    const colors = colorThemes[theme];
+    // document.body.style.backgroundColor = colors.bodyBackground;
+    document.querySelectorAll('.mic-btn button').forEach(btn => {
+        btn.style.backgroundColor = colors.buttonBackground;
+        btn.style.borderColor = colors.buttonBorder;
+    });
+    document.getElementById('output').style.borderColor = colors.outputBorder;
+    document.getElementById('output').style.backgroundColor = colors.outputBackground;
+    document.getElementById('output').style.color = colors.outputText;
+    document.getElementById('action').style.borderColor = colors.actionBorder;
+    document.getElementById('action').style.backgroundColor = colors.actionBackground;
+    document.getElementById('action').style.color = colors.actionText;
+    // document.getElementById('mic-btn').style.color = colors.bodyBackground;
+}
+
+</script>
+</head>
+<body>
+<audio src="game_audio.mp3" class="sound"></audio> 
+
+<div class="lang">
+  <div class="language">
+  <span class="lang-text">Please Select A Language: </span>
+  <span class="lang-dropdown">
+<select id="language">
+    <option value="en">English</option>
+    <option value="hi">Hindi</option>
+    <option value="mr">Marathi</option>   
+    <option value="gu">Gujarati</option>
+    <option value="pa">Punjabi</option>
+    <option value="sd">Sindhi</option>
+    <option value="bn">Bengali</option>
+    <option value="te">Telugu</option>
+    <option value="ta">Tamil</option>
+    <option value="ur">Urdu</option>
+  </select>
+  </span></div>
+  <div class="color-buttons">
+    <button id="theme1"  onclick="applyColorTheme('theme1')">Theme 1</button>
+    <button id="theme2" onclick="applyColorTheme('theme2')">Theme 2</button>
+    <button id="theme3" onclick="applyColorTheme('theme3')">Theme 3</button>
+  </div>
+</div>
+
+<div class="mic-btn"><button onclick="startRecognition()"><i class="fas fa-microphone"></i></button></div>
+<div id="output"></div>
+<div id="action"></div>
+
+<script>
+
+var recognition;
+var isGreetingSpoken = false; // Flag to track whether the greeting message has been spoken
+var speechSpeed = 1.0; // Initial speech speed
+
+function startRecognition() {
+    var selectedLanguage = document.getElementById("language").value;
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = selectedLanguage;
+    recognition.continuous = false; // Prevent continuous recognition
+    recognition.interimResults = false; // Turn off interim results
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<div class='search-query'><b>Spoken Text: </b>" + transcript + "</div>";
+
+        if (isGreetingSpoken) { // Start recognizing commands only after the greeting message has been spoken
+            playSound(); // Play sound after each action
+            if (transcript.includes("wikipedia") || transcript.includes("विकिपीडिया") || transcript.includes("વિકિપીડિયા") || transcript.includes("ਵਿਕੀਪੀਡੀਆ") || transcript.includes("وڪيپيڊيا") || transcript.includes("উইকিপিডিয়া") || transcript.includes("వికీపీడియా") || transcript.includes("விக்கிப்பீடியா") || transcript.includes("ویکیپیڈیا")) {
+                getSearchQuery(selectedLanguage);
+            } else if (transcript.includes("ask") || transcript.includes("पूछिए") || transcript.includes("विचार") || transcript.includes("પૂછો") || transcript.includes("ਪੁੱਛੋ") || transcript.includes("پڇو") || transcript.includes("জিজ্ঞাসা") || transcript.includes("అడుగు") || transcript.includes("வினவு") || transcript.includes("پوچھنا")) {
+                getQuestion(selectedLanguage);
+            } 
+            if (transcript.includes("notes")) {
+            // If the user wants to take notes, prompt for file name
+            speak("Please provide a file name for the note.", selectedLanguage);
+            takeFileName(selectedLanguage);
+        }
+             else if (transcript.includes('help')) {
+                speak("Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.", selectedLanguage);
+            } else if (transcript.includes('increase speed')) {
+                speechSpeed += 2;
+                speak("Speech speed increased.",    selectedLanguage);
+            } else if (transcript.includes('decrease speed')) {
+                speechSpeed -= 2;
+                speak("Speech speed decreased.",    selectedLanguage);
+            } else if (transcript.includes('stop')) {
+                speakandstop("Execution aborted", selectedLanguage);
+                recognition.abort();
+            } 
+        }
+    };
+
+    if (!isGreetingSpoken) { // If the greeting message hasn't been spoken yet, speak it
+        //speak("Hello, I am your voice assistant. Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.", selectedLanguage);
+        speak("h",selectedLanguage);
+        isGreetingSpoken = true; // Set the flag to true indicating that the greeting message has been spoken
+    } else { // If the greeting message has already been spoken, start recognition directly
+        recognition.start();
+    }
+}
+
+function playSound() {
+    var audio = document.querySelector('.sound');
+    audio.play(); // Play the sound
+}
+
+function takeFileName(selectedLanguage) {
+    recognition.stop();
+
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+
+    innerRecognition.onerror = function(event) {
+        console.error("Error occurred during filename recognition:", event.error);
+        speak("An error occurred during filename recognition. Please try again.", selectedLanguage);
+    };
+
+    innerRecognition.onresult = function(event) {
+        console.log("Notes in function")
+        var fileName = event.results[0][0].transcript.trim();
+        console.log('Transcript for "filename" command:', fileName); // Log the transcript
+        document.getElementById("output").innerHTML += "<div class='instruction'><b>File name:</b> " + fileName + '</div>';
+        takeNoteContent(selectedLanguage, fileName);
+    };
+
+    document.getElementById("output").innerHTML += "<div class='searching'><b>File Name:</b></div>";
+    
+    innerRecognition.start();
+}
+
+
+function takeNoteContent(selectedLanguage, fileName) {
+    // Declare recognition for note content input
+    var noteRecognition = new webkitSpeechRecognition();
+    noteRecognition.lang = selectedLanguage;
+    noteRecognition.continuous = false; // Stop recognition after capturing the note content
+    noteRecognition.interimResults = false;
+    function handleNoteContentResponse(event) {
+        var response = event.results[0][0].transcript.trim();
+        if (response !== "") {
+            document.getElementById("output").innerHTML += "<div class='instruction'><b>Note content:</b> " + response + "</div>";
+            sendNoteToBackend(fileName, response, selectedLanguage);
+        } else {
+            speak("I'm sorry, I didn't catch that. Please provide the content for the note.", selectedLanguage);
+            document.getElementById("output").innerHTML += "<div class='instruction'><b>Please say the note content:</b></div>";
+            takeNoteContent(selectedLanguage, fileName); // Retry if no response
+        }
+    }
+    noteRecognition.onresult = handleNoteContentResponse;
+
+    noteRecognition.start(); // Start recognition for note content
+
+    // Function to handle user's response for note content
+   
+}
+
+function speakWithDelay(message, selectedLanguage, delay) {
+    // Mute the microphone
+    recognition.stop();
+
+    // Speak the message after the specified delay
+    setTimeout(function() {
+        speak(message, selectedLanguage);
+        // Restart recognition after speaking is finished
+        setTimeout(function() {
+            recognition.start();
+        }, 1000); // Delay to start recognition after speaking
+    }, delay); // Delay to speak the message
+}
+var isMicMuted = false; // Flag to track whether the microphone is muted
+
+// Function to temporarily mute the microphone for a specified duration
+function muteMicForDuration(duration) {
+    isMicMuted = true; // Set the flag to true to indicate that the microphone is muted
+    setTimeout(function() {
+        isMicMuted = false; // Unset the flag after the specified duration
+    }, duration);
+}
+
+function getQuestion(selectedLanguage) {
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<div class='instruction'><b>Question:</b> " + question + '</div>';
+        sendVoiceToPythonForGemini(question, selectedLanguage);
+    };
+
+    document.getElementById("output").innerHTML += "<div class='searching'><b>Ask your question:</b></div>";
+    
+
+    innerRecognition.start(); 
+}
+
+
+function getSearchQuery(selectedLanguage) {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<div class='searchinig'><b>Search Query:</b> " + searchQuery + "</div>";
+        sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage);
+    };
+    // speak("Ask your question", selectedLanguage); 
+    document.getElementById("output").innerHTML += "<div class='instruction'><b>Say your search query for Wikipedia:</b></div>";
+    
+    innerRecognition.start();
+}
+
+
+function sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<div class='search-query'><b>Wikipedia Summary:</b> " + response.summary + "</div>";
+            speakWithMute(response.summary, selectedLanguage); // Speak the Wikipedia summary
+            // translateSummary(response.summary, selectedLanguage);
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery, selected_language: selectedLanguage });
+    xhr.send(data);
+}
+
+// function sendVoiceToPythonForGemini(question, selectedLanguage) {
+//     var xhr = new XMLHttpRequest();
+//     xhr.open("POST", "http://localhost:5000/gemini");
+//     xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+//     xhr.onreadystatechange = function () {
+//         if (xhr.readyState === 4 && xhr.status === 200) {
+//             var response = JSON.parse(xhr.responseText);
+//             document.getElementById("action").innerHTML = "<div class='search-query'><b>Response:</b> " + response.ai_response + "</div>";
+//             speak(response.ai_response, selectedLanguage); // Speak the Gemini response
+//             startRecognition(); // Start recognition again after response
+//         }
+//     };
+//     var data = JSON.stringify({ gemini: question, selected_language: selectedLanguage });
+//     xhr.send(data);
+// }
+
+function sendVoiceToPythonForGemini(question, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<div class='search-query'><b>Response:</b> " + response.ai_response + "</div>";
+            // Speak the Gemini response and mute the microphone while speaking
+            speakWithMute(response.ai_response, selectedLanguage);
+        }
+    };
+    var data = JSON.stringify({ gemini: question, selected_language: selectedLanguage });
+    xhr.send(data);
+}
+
+// Function to speak and mute the microphone while speaking
+function speakWithMute(message, selectedLanguage) {
+    // Mute the microphone
+    recognition.stop();
+
+    // Speak the message
+    var utterance = new SpeechSynthesisUtterance(message);
+    utterance.rate = speechSpeed; // Set the speech speed
+    utterance.lang = selectedLanguage; // Set the language for speech
+    utterance.onend = function() {
+        recognition.start(); // Start recognition after speaking is finished
+    };
+    window.speechSynthesis.speak(utterance);
+}
+
+
+
+function translateSummary(summary, selectedLanguage) {
+  
+  // Display the translated summary
+  document.getElementById("action").innerHTML = summary;
+  speak(summary);
+}
+
+let retryCount = 0; // Track retries for filename recognition
+
+
+
+function sendNoteToBackend(fileName, noteContent, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/notes");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            // Display response or handle as needed
+        }
+    };
+    var data = JSON.stringify({file_name: fileName, note_content: noteContent, selected_language: selectedLanguage});
+    xhr.send(data);
+}
+
+
+function speak(text, selectedLanguage) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    utterance.lang = selectedLanguage; // Set the language for speech
+    utterance.onend = function() {
+        recognition.start(); // Start recognition after speaking is finished
+    };
+    window.speechSynthesis.speak(utterance);
+}
+
+
+
+function speakandstop(text,selectedLanguage) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    utterance.lang = selectedLanguage;
+    window.speechSynthesis.speak(utterance);
+}
+
+
+// Add this to your existing JavaScript code
+document.addEventListener('keydown', function(event) {
+    if (event.keyCode === 38) { // Up arrow key
+        changeFontSize(2); // Increase font size by 2px
+    } else if (event.keyCode === 40) { // Down arrow key
+        changeFontSize(-2); // Decrease font size by 2px
+    }
+});
+
+function changeFontSize(changeAmount) {
+    var body = document.querySelector('body');
+    var currentSize = parseFloat(window.getComputedStyle(body, null).getPropertyValue('font-size'));
+    var newSize = currentSize + changeAmount;
+    body.style.fontSize = newSize + 'px';
+
+    // Adjust font size of buttons
+    var buttons = document.querySelectorAll('button');
+    buttons.forEach(function(button) {
+        var currentButtonSize = parseFloat(window.getComputedStyle(button, null).getPropertyValue('font-size'));
+        var newButtonSize = currentButtonSize + changeAmount;
+        button.style.fontSize = newButtonSize + 'px';
+    });
+
+    // Adjust font size of select and option elements
+    var select = document.getElementById('language');
+    var options = select.querySelectorAll('option');
+    select.style.fontSize = newSize + 'px'; // Apply the same font size as body to select element
+    options.forEach(function(option) {
+        option.style.fontSize = newSize + 'px'; // Apply the same font size as body to option elements
+    });
+
+    // Adjust font size of div elements
+    var divs = document.querySelectorAll('div');
+    divs.forEach(function(div) {
+        var currentDivSize = parseFloat(window.getComputedStyle(div, null).getPropertyValue('font-size'));
+        var newDivSize = currentDivSize + changeAmount;
+        div.style.fontSize = newDivSize + 'px';
+    });
+
+    // Adjust font size of the microphone icon
+    var microphoneIcon = document.querySelector('.mic-btn button i');
+    var currentIconSize = parseFloat(window.getComputedStyle(microphoneIcon, null).getPropertyValue('font-size'));
+    var newIconSize = currentIconSize + changeAmount;
+    microphoneIcon.style.fontSize = newIconSize + 'px';
+}
+
+
+
+</script>
+
+</body>
+</html>  -->
+
+<!-- works -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="https://code.responsivevoice.org/responsivevoice.js?key=E3YMIL1b"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/google-tts-api/dist/index.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+
+  // Define different color themes
+const colorThemes = {
+    theme1: {
+        bodyBackground: '#9FB6E2',
+        buttonBackground: '#f1bb83',
+        buttonBorder: '#800080',
+        outputBorder: '#000000',
+        outputBackground: '#f1bb83',
+        outputText: '#000000',
+        actionBorder: '#000000',
+        actionBackground: '#f1bb83',
+        actionText: '#000000'
+    },
+    theme2: {
+        bodyBackground: '#905971',
+        buttonBackground: '#E09ADA',
+        buttonBorder: '#000000',
+        outputBorder: '#000000',
+        outputBackground: '#E0D09C',
+        outputText: '#000000',
+        actionBorder: '#000000',
+        actionBackground: '#E0D09C',
+        actionText: '#000000'
+    },
+    theme3: {
+        bodyBackground: '#905971',
+        buttonBackground: '#905971',
+        buttonBorder: '#ffffff',
+        outputBorder: '#000000',
+        outputBackground: '#F9D372',
+        outputText: '#000000',
+        actionBorder: '#000000',
+        actionBackground: '#F9D372',
+        actionText: '#000000'
+    }
+};
+
+// Function to apply the selected color theme
+function applyColorTheme(theme) {
+    console.log('Applying color theme:', theme);
+    const colors = colorThemes[theme];
+    // document.body.style.backgroundColor = colors.bodyBackground;
+    document.querySelectorAll('.mic-btn button').forEach(btn => {
+        btn.style.backgroundColor = colors.buttonBackground;
+        btn.style.borderColor = colors.buttonBorder;
+    });
+    document.getElementById('output').style.borderColor = colors.outputBorder;
+    document.getElementById('output').style.backgroundColor = colors.outputBackground;
+    document.getElementById('output').style.color = colors.outputText;
+    document.getElementById('action').style.borderColor = colors.actionBorder;
+    document.getElementById('action').style.backgroundColor = colors.actionBackground;
+    document.getElementById('action').style.color = colors.actionText;
+    // document.getElementById('mic-btn').style.color = colors.bodyBackground;
+}
+
+</script>
+</head>
+<body>
+<audio src="" class="speech"></audio>
+
+<div class="lang">
+  <div class="language">
+  <span class="lang-text">Please Select A Language: </span>
+  <span class="lang-dropdown">
+<select id="language">
+    <option value="en">English</option>
+    <option value="hi">Hindi</option>
+    <option value="mr">Marathi</option>   
+    <option value="gu">Gujarati</option>
+    <option value="pa">Punjabi</option>
+    <option value="sd">Sindhi</option>
+    <option value="bn">Bengali</option>
+    <option value="te">Telugu</option>
+    <option value="ta">Tamil</option>
+    <option value="ur">Urdu</option>
+
+  </select>
+  
+  </span></div>
+  <div class="color-buttons">
+    <button id="theme1"  onclick="applyColorTheme('theme1')">Theme 1</button>
+    <button id="theme2" onclick="applyColorTheme('theme2')">Theme 2</button>
+    <button id="theme3" onclick="applyColorTheme('theme3')">Theme 3</button>
+  </div>
+</div>
+
+<div class="mic-btn"><button onclick="startRecognition()"><i class="fas fa-microphone"></i></button></div>
+<div id="output"></div>
+<div id="action"></div>
+
+<script>
+
+var recognition;
+var isGreetingSpoken = false; // Flag to track whether the greeting message has been spoken
+var speechSpeed = 1.0; // Initial speech speed
+
+function startRecognition() {
+    var selectedLanguage = document.getElementById("language").value;
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = selectedLanguage;
+    recognition.continuous = false; // Prevent continuous recognition
+    recognition.interimResults = false; // Turn off interim results
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<div class='search-query'><b>Spoken Text: </b>" + transcript + "</div>";
+
+        if (isGreetingSpoken) { // Start recognizing commands only after the greeting message has been spoken
+            if (transcript.includes("wikipedia") || transcript.includes("विकिपीडिया") || transcript.includes("વિકિપીડિયા") || transcript.includes("ਵਿਕੀਪੀਡੀਆ") || transcript.includes("وڪيپيڊيا") || transcript.includes("উইকিপিডিয়া") || transcript.includes("వికీపీడియా") || transcript.includes("விக்கிப்பீடியா") || transcript.includes("ویکیپیڈیا")) {
+                getSearchQuery(selectedLanguage);
+            } else if (transcript.includes("ask") || transcript.includes("पूछिए") || transcript.includes("विचार") || transcript.includes("પૂછો") || transcript.includes("ਪੁੱਛੋ") || transcript.includes("پڇو") || transcript.includes("জিজ্ঞাসা") || transcript.includes("అడుగు") || transcript.includes("வினவு") || transcript.includes("پوچھنا")) {
+                getQuestion(selectedLanguage);
+            } 
+            if (transcript.includes("notes")) {
+            // If the user wants to take notes, prompt for file name
+            speak("Please provide a file name for the note.", selectedLanguage);
+            takeFileName(selectedLanguage);
+        }
+             else if (transcript.includes('help')) {
+                speak("Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.", selectedLanguage);
+            } else if (transcript.includes('increase speed')) {
+                speechSpeed += 2;
+                speak("Speech speed increased.",    selectedLanguage);
+            } else if (transcript.includes('decrease speed')) {
+                speechSpeed -= 2;
+                speak("Speech speed decreased.",    selectedLanguage);
+            } else if (transcript.includes('stop')) {
+                speakandstop("Execution aborted", selectedLanguage);
+                recognition.abort();
+            } 
+            //else {
+            //     sendVoiceToPython(transcript);
+            // }
+        }
+    };
+
+    if (!isGreetingSpoken) { // If the greeting message hasn't been spoken yet, speak it
+       // speak("Hello, I am your voice assistant. Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.");
+        speak("h",selectedLanguage);
+        isGreetingSpoken = true; // Set the flag to true indicating that the greeting message has been spoken
+    } else { // If the greeting message has already been spoken, start recognition directly
+        recognition.start();
+    }
+}
+
+
+function takeFileName(selectedLanguage) {
+    recognition.stop();
+
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+
+    innerRecognition.onerror = function(event) {
+        console.error("Error occurred during filename recognition:", event.error);
+        speak("An error occurred during filename recognition. Please try again.", selectedLanguage);
+    };
+
+    innerRecognition.onresult = function(event) {
+        console.log("Notes in function")
+        var fileName = event.results[0][0].transcript.trim();
+        console.log('Transcript for "filename" command:', fileName); // Log the transcript
+        document.getElementById("output").innerHTML += "<div class='instruction'><b>File name:</b> " + fileName + '</div>';
+        takeNoteContent(selectedLanguage, fileName);
+    };
+
+    document.getElementById("output").innerHTML += "<div class='searching'><b>File Name:</b></div>";
+    
+    innerRecognition.start();
+}
+
+
+function takeNoteContent(selectedLanguage, fileName) {
+    // Declare recognition for note content input
+    var noteRecognition = new webkitSpeechRecognition();
+    noteRecognition.lang = selectedLanguage;
+    noteRecognition.continuous = false; // Stop recognition after capturing the note content
+    noteRecognition.interimResults = false;
+    function handleNoteContentResponse(event) {
+        var response = event.results[0][0].transcript.trim();
+        if (response !== "") {
+            document.getElementById("output").innerHTML += "<div class='instruction'><b>Note content:</b> " + response + "</div>";
+            sendNoteToBackend(fileName, response, selectedLanguage);
+        } else {
+            speak("I'm sorry, I didn't catch that. Please provide the content for the note.", selectedLanguage);
+            document.getElementById("output").innerHTML += "<div class='instruction'><b>Please say the note content:</b></div>";
+            takeNoteContent(selectedLanguage, fileName); // Retry if no response
+        }
+    }
+    noteRecognition.onresult = handleNoteContentResponse;
+
+    noteRecognition.start(); // Start recognition for note content
+
+    // Function to handle user's response for note content
+   
+}
+
+function speakWithDelay(message, selectedLanguage, delay) {
+    // Mute the microphone
+    recognition.stop();
+
+    // Speak the message after the specified delay
+    setTimeout(function() {
+        speak(message, selectedLanguage);
+        // Restart recognition after speaking is finished
+        setTimeout(function() {
+            recognition.start();
+        }, 1000); // Delay to start recognition after speaking
+    }, delay); // Delay to speak the message
+}
+var isMicMuted = false; // Flag to track whether the microphone is muted
+
+// Function to temporarily mute the microphone for a specified duration
+function muteMicForDuration(duration) {
+    isMicMuted = true; // Set the flag to true to indicate that the microphone is muted
+    setTimeout(function() {
+        isMicMuted = false; // Unset the flag after the specified duration
+    }, duration);
+}
+
+function getQuestion(selectedLanguage) {
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<div class='instruction'><b>Question:</b> " + question + '</div>';
+        sendVoiceToPythonForGemini(question, selectedLanguage);
+    };
+
+    document.getElementById("output").innerHTML += "<div class='searching'><b>Ask your question:</b></div>";
+    
+
+    innerRecognition.start(); 
+}
+
+
+function getSearchQuery(selectedLanguage) {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<div class='searchinig'><b>Search Query:</b> " + searchQuery + "</div>";
+        sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage);
+    };
+    // speak("Ask your question", selectedLanguage); 
+    document.getElementById("output").innerHTML += "<div class='instruction'><b>Say your search query for Wikipedia:</b></div>";
+    
+    innerRecognition.start();
+}
+
+
+function sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<div class='search-query'><b>Wikipedia Summary:</b> " + response.summary + "</div>";
+            speak(response.summary, selectedLanguage); // Speak the Wikipedia summary
+            // translateSummary(response.summary, selectedLanguage);
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery, selected_language: selectedLanguage });
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<div class='search-query'><b>Response:</b> " + response.ai_response + "</div>";
+            speak(response.ai_response, selectedLanguage); // Speak the Gemini response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({ gemini: question, selected_language: selectedLanguage });
+    xhr.send(data);
+}
+
+function translateSummary(summary, selectedLanguage) {
+  
+  // Display the translated summary
+  document.getElementById("action").innerHTML = summary;
+  speak(summary);
+}
+
+let retryCount = 0; // Track retries for filename recognition
+
+
+
+function sendNoteToBackend(fileName, noteContent, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/notes");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            // Display response or handle as needed
+        }
+    };
+    var data = JSON.stringify({file_name: fileName, note_content: noteContent, selected_language: selectedLanguage});
+    xhr.send(data);
+}
+
+
+function speak(text, selectedLanguage) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    utterance.lang = selectedLanguage; // Set the language for speech
+    utterance.onend = function() {
+        recognition.start(); // Start recognition after speaking is finished
+    };
+    window.speechSynthesis.speak(utterance);
+}
+
+
+
+function speakandstop(text,selectedLanguage) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    utterance.lang = selectedLanguage;
+    window.speechSynthesis.speak(utterance);
+}
+
+
+// Add this to your existing JavaScript code
+document.addEventListener('keydown', function(event) {
+    if (event.keyCode === 38) { // Up arrow key
+        changeFontSize(2); // Increase font size by 2px
+    } else if (event.keyCode === 40) { // Down arrow key
+        changeFontSize(-2); // Decrease font size by 2px
+    }
+});
+
+function changeFontSize(changeAmount) {
+    var body = document.querySelector('body');
+    var currentSize = parseFloat(window.getComputedStyle(body, null).getPropertyValue('font-size'));
+    var newSize = currentSize + changeAmount;
+    body.style.fontSize = newSize + 'px';
+
+    // Adjust font size of buttons
+    var buttons = document.querySelectorAll('button');
+    buttons.forEach(function(button) {
+        var currentButtonSize = parseFloat(window.getComputedStyle(button, null).getPropertyValue('font-size'));
+        var newButtonSize = currentButtonSize + changeAmount;
+        button.style.fontSize = newButtonSize + 'px';
+    });
+
+    // Adjust font size of select and option elements
+    var select = document.getElementById('language');
+    var options = select.querySelectorAll('option');
+    select.style.fontSize = newSize + 'px'; // Apply the same font size as body to select element
+    options.forEach(function(option) {
+        option.style.fontSize = newSize + 'px'; // Apply the same font size as body to option elements
+    });
+
+    // Adjust font size of div elements
+    var divs = document.querySelectorAll('div');
+    divs.forEach(function(div) {
+        var currentDivSize = parseFloat(window.getComputedStyle(div, null).getPropertyValue('font-size'));
+        var newDivSize = currentDivSize + changeAmount;
+        div.style.fontSize = newDivSize + 'px';
+    });
+
+    // Adjust font size of the microphone icon
+    var microphoneIcon = document.querySelector('.mic-btn button i');
+    var currentIconSize = parseFloat(window.getComputedStyle(microphoneIcon, null).getPropertyValue('font-size'));
+    var newIconSize = currentIconSize + changeAmount;
+    microphoneIcon.style.fontSize = newIconSize + 'px';
+}
+
+
+
+</script>
+
+</body>
+</html>  -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="https://code.responsivevoice.org/responsivevoice.js?key=E3YMIL1b"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/google-tts-api/dist/index.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script>
+
+  // Define different color themes
+const colorThemes = {
+    theme1: {
+        bodyBackground: '#9FB6E2',
+        buttonBackground: '#f1bb83',
+        buttonBorder: '#800080',
+        outputBorder: '#000000',
+        outputBackground: '#f1bb83',
+        outputText: '#000000',
+        actionBorder: '#000000',
+        actionBackground: '#f1bb83',
+        actionText: '#000000'
+    },
+    theme2: {
+        bodyBackground: '#905971',
+        buttonBackground: '#E09ADA',
+        buttonBorder: '#000000',
+        outputBorder: '#000000',
+        outputBackground: '#E0D09C',
+        outputText: '#000000',
+        actionBorder: '#000000',
+        actionBackground: '#E0D09C',
+        actionText: '#000000'
+    },
+    theme3: {
+        bodyBackground: '#905971',
+        buttonBackground: '#905971',
+        buttonBorder: '#ffffff',
+        outputBorder: '#000000',
+        outputBackground: '#F9D372',
+        outputText: '#000000',
+        actionBorder: '#000000',
+        actionBackground: '#F9D372',
+        actionText: '#000000'
+    }
+};
+
+// Function to apply the selected color theme
+function applyColorTheme(theme) {
+    console.log('Applying color theme:', theme);
+    const colors = colorThemes[theme];
+    // document.body.style.backgroundColor = colors.bodyBackground;
+    document.querySelectorAll('.mic-btn button').forEach(btn => {
+        btn.style.backgroundColor = colors.buttonBackground;
+        btn.style.borderColor = colors.buttonBorder;
+    });
+    document.getElementById('output').style.borderColor = colors.outputBorder;
+    document.getElementById('output').style.backgroundColor = colors.outputBackground;
+    document.getElementById('output').style.color = colors.outputText;
+    document.getElementById('action').style.borderColor = colors.actionBorder;
+    document.getElementById('action').style.backgroundColor = colors.actionBackground;
+    document.getElementById('action').style.color = colors.actionText;
+    // document.getElementById('mic-btn').style.color = colors.bodyBackground;
+}
+
+</script>
+</head>
+<body>
+<audio src="" class="speech"></audio>
+
+<div class="lang">
+  <div class="language">
+  <span class="lang-text">Please Select A Language: </span>
+  <span class="lang-dropdown">
+<select id="language">
+    <option value="en">English</option>
+    <option value="hi">Hindi</option>
+    <option value="mr">Marathi</option>   
+    <option value="gu">Gujarati</option>
+    <option value="pa">Punjabi</option>
+    <option value="sd">Sindhi</option>
+    <option value="bn">Bengali</option>
+    <option value="te">Telugu</option>
+    <option value="ta">Tamil</option>
+    <option value="ur">Urdu</option>
+
+  </select>
+  
+  </span></div>
+  <div class="color-buttons">
+    <button id="theme1"  onclick="applyColorTheme('theme1')">Theme 1</button>
+    <button id="theme2" onclick="applyColorTheme('theme2')">Theme 2</button>
+    <button id="theme3" onclick="applyColorTheme('theme3')">Theme 3</button>
+  </div>
+</div>
+
+<div class="mic-btn"><button onclick="startRecognition()"><i class="fas fa-microphone"></i></button></div>
+<div id="output"></div>
+<div id="action"></div>
+
+<script>
+
+var recognition;
+var isGreetingSpoken = false; // Flag to track whether the greeting message has been spoken
+var speechSpeed = 1.0; // Initial speech speed
+
+function startRecognition() {
+    var selectedLanguage = document.getElementById("language").value;
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = selectedLanguage;
+    recognition.continuous = false; // Prevent continuous recognition
+    recognition.interimResults = false; // Turn off interim results
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<div class='search-query'><b>Spoken Text: </b>" + transcript + "</div>";
+
+        if (isGreetingSpoken) { // Start recognizing commands only after the greeting message has been spoken
+            if (transcript.includes("wikipedia") || transcript.includes("विकिपीडिया") || transcript.includes("વિકિપીડિયા") || transcript.includes("ਵਿਕੀਪੀਡੀਆ") || transcript.includes("وڪيپيڊيا") || transcript.includes("উইকিপিডিয়া") || transcript.includes("వికీపీడియా") || transcript.includes("விக்கிப்பீடியா") || transcript.includes("ویکیپیڈیا")) {
+                getSearchQuery(selectedLanguage);
+            } else if (transcript.includes("ask") || transcript.includes("पूछिए") || transcript.includes("विचार") || transcript.includes("પૂછો") || transcript.includes("ਪੁੱਛੋ") || transcript.includes("پڇو") || transcript.includes("জিজ্ঞাসা") || transcript.includes("అడుగు") || transcript.includes("வினவு") || transcript.includes("پوچھنا")) {
+                getQuestion(selectedLanguage);
+            } 
+            if (transcript.includes("notes")) {
+            // If the user wants to take notes, prompt for file name
+            speak("Please provide a file name for the note.", selectedLanguage);
+            takeFileName(selectedLanguage);
+        }
+             else if (transcript.includes('help')) {
+                speak("Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.", selectedLanguage);
+            } else if (transcript.includes('increase speed')) {
+                speechSpeed += 2;
+                speak("Speech speed increased.",    selectedLanguage);
+            } else if (transcript.includes('decrease speed')) {
+                speechSpeed -= 2;
+                speak("Speech speed decreased.",    selectedLanguage);
+            } else if (transcript.includes('stop')) {
+                speakandstop("Execution aborted", selectedLanguage);
+                recognition.abort();
+            } 
+            //else {
+            //     sendVoiceToPython(transcript);
+            // }
+        }
+    };
+
+    if (!isGreetingSpoken) { // If the greeting message hasn't been spoken yet, speak it
+        // speak("Hello, I am your voice assistant. Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.");
+        speak("h",selectedLanguage);
+
+
+        isGreetingSpoken = true; // Set the flag to true indicating that the greeting message has been spoken
+    } else { // If the greeting message has already been spoken, start recognition directly
+        recognition.start();
+    }
+}
+
+
+function takeFileName(selectedLanguage) {
+    recognition.stop();
+
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+
+    innerRecognition.onerror = function(event) {
+        console.error("Error occurred during filename recognition:", event.error);
+        speak("An error occurred during filename recognition. Please try again.", selectedLanguage);
+    };
+
+    innerRecognition.onresult = function(event) {
+        console.log("Notes in function")
+        var fileName = event.results[0][0].transcript.trim();
+        console.log('Transcript for "filename" command:', fileName); // Log the transcript
+        document.getElementById("output").innerHTML += "<div class='instruction'><b>File name:</b> " + fileName + '</div>';
+        takeNoteContent(selectedLanguage, fileName);
+    };
+
+    document.getElementById("output").innerHTML += "<div class='searching'><b>File Name:</b></div>";
+    
+    innerRecognition.start();
+}
+
+
+function takeNoteContent(selectedLanguage, fileName) {
+    // Declare recognition for note content input
+    var noteRecognition = new webkitSpeechRecognition();
+    noteRecognition.lang = selectedLanguage;
+    noteRecognition.continuous = false; // Stop recognition after capturing the note content
+    noteRecognition.interimResults = false;
+    function handleNoteContentResponse(event) {
+        var response = event.results[0][0].transcript.trim();
+        if (response !== "") {
+            document.getElementById("output").innerHTML += "<div class='instruction'><b>Note content:</b> " + response + "</div>";
+            sendNoteToBackend(fileName, response, selectedLanguage);
+        } else {
+            speak("I'm sorry, I didn't catch that. Please provide the content for the note.", selectedLanguage);
+            document.getElementById("output").innerHTML += "<div class='instruction'><b>Please say the note content:</b></div>";
+            takeNoteContent(selectedLanguage, fileName); // Retry if no response
+        }
+    }
+    noteRecognition.onresult = handleNoteContentResponse;
+
+    noteRecognition.start(); // Start recognition for note content
+
+    // Function to handle user's response for note content
+   
+}
+
+function speakWithDelay(message, selectedLanguage, delay) {
+    // Mute the microphone
+    recognition.stop();
+
+    // Speak the message after the specified delay
+    setTimeout(function() {
+        speak(message, selectedLanguage);
+        // Restart recognition after speaking is finished
+        setTimeout(function() {
+            recognition.start();
+        }, 1000); // Delay to start recognition after speaking
+    }, delay); // Delay to speak the message
+}
+var isMicMuted = false; // Flag to track whether the microphone is muted
+
+// Function to temporarily mute the microphone for a specified duration
+function muteMicForDuration(duration) {
+    isMicMuted = true; // Set the flag to true to indicate that the microphone is muted
+    setTimeout(function() {
+        isMicMuted = false; // Unset the flag after the specified duration
+    }, duration);
+}
+
+function getQuestion(selectedLanguage) {
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<div class='instruction'><b>Question:</b> " + question + '</div>';
+        sendVoiceToPythonForGemini(question, selectedLanguage);
+    };
+
+    document.getElementById("output").innerHTML += "<div class='searching'><b>Ask your question:</b></div>";
+    
+
+    innerRecognition.start(); 
+}
+
+
+function getSearchQuery(selectedLanguage) {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<div class='searchinig'><b>Search Query:</b> " + searchQuery + "</div>";
+        sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage);
+    };
+    // speak("Ask your question", selectedLanguage); 
+    document.getElementById("output").innerHTML += "<div class='instruction'><b>Say your search query for Wikipedia:</b></div>";
+    
+    innerRecognition.start();
+}
+
+
+function sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<div class='search-query'><b>Wikipedia Summary:</b> " + response.summary + "</div>";
+            speak(response.summary, selectedLanguage); // Speak the Wikipedia summary
+            // translateSummary(response.summary, selectedLanguage);
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery, selected_language: selectedLanguage });
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<div class='search-query'><b>Response:</b> " + response.ai_response + "</div>";
+            speak(response.ai_response, selectedLanguage); // Speak the Gemini response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({ gemini: question, selected_language: selectedLanguage });
+    xhr.send(data);
+}
+
+function translateSummary(summary, selectedLanguage) {
+  
+  // Display the translated summary
+  document.getElementById("action").innerHTML = summary;
+  speak(summary);
+}
+
+let retryCount = 0; // Track retries for filename recognition
+
+
+
+function sendNoteToBackend(fileName, noteContent, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/notes");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            // Display response or handle as needed
+        }
+    };
+    var data = JSON.stringify({file_name: fileName, note_content: noteContent, selected_language: selectedLanguage});
+    xhr.send(data);
+}
+
+
+function speak(text, selectedLanguage) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    utterance.lang = selectedLanguage; // Set the language for speech
+    utterance.onend = function() {
+        recognition.start(); // Start recognition after speaking is finished
+    };
+    window.speechSynthesis.speak(utterance);
+}
+
+
+
+function speakandstop(text,selectedLanguage) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    utterance.lang = selectedLanguage;
+    window.speechSynthesis.speak(utterance);
+}
+
+
+// Add this to your existing JavaScript code
+document.addEventListener('keydown', function(event) {
+    if (event.keyCode === 38) { // Up arrow key
+        changeFontSize(2); // Increase font size by 2px
+    } else if (event.keyCode === 40) { // Down arrow key
+        changeFontSize(-2); // Decrease font size by 2px
+    }
+});
+
+function changeFontSize(changeAmount) {
+    var body = document.querySelector('body');
+    var currentSize = parseFloat(window.getComputedStyle(body, null).getPropertyValue('font-size'));
+    var newSize = currentSize + changeAmount;
+    body.style.fontSize = newSize + 'px';
+
+    // Adjust font size of buttons
+    var buttons = document.querySelectorAll('button');
+    buttons.forEach(function(button) {
+        var currentButtonSize = parseFloat(window.getComputedStyle(button, null).getPropertyValue('font-size'));
+        var newButtonSize = currentButtonSize + changeAmount;
+        button.style.fontSize = newButtonSize + 'px';
+    });
+
+    // Adjust font size of select and option elements
+    var select = document.getElementById('language');
+    var options = select.querySelectorAll('option');
+    select.style.fontSize = newSize + 'px'; // Apply the same font size as body to select element
+    options.forEach(function(option) {
+        option.style.fontSize = newSize + 'px'; // Apply the same font size as body to option elements
+    });
+
+    // Adjust font size of div elements
+    var divs = document.querySelectorAll('div');
+    divs.forEach(function(div) {
+        var currentDivSize = parseFloat(window.getComputedStyle(div, null).getPropertyValue('font-size'));
+        var newDivSize = currentDivSize + changeAmount;
+        div.style.fontSize = newDivSize + 'px';
+    });
+
+    // Adjust font size of the microphone icon
+    var microphoneIcon = document.querySelector('.mic-btn button i');
+    var currentIconSize = parseFloat(window.getComputedStyle(microphoneIcon, null).getPropertyValue('font-size'));
+    var newIconSize = currentIconSize + changeAmount;
+    microphoneIcon.style.fontSize = newIconSize + 'px';
+}
+
+
+
+</script>
+
+</body>
+</html>  -->
+
+<!-- works with bit mulitlingual -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="../static/js/colors.js" defer></script>
+<script src="./frontend.js" ></script>
+<script>
+  // Define different color themes
+const colorThemes = {
+    theme1: {
+        bodyBackground: '#9FB6E2',
+        buttonBackground: '#f1bb83',
+        buttonBorder: '#800080',
+        outputBorder: '#000000',
+        outputBackground: '#f1bb83',
+        outputText: '#000000',
+        actionBorder: '#000000',
+        actionBackground: '#f1bb83',
+        actionText: '#000000'
+    },
+    theme2: {
+        bodyBackground: '#905971',
+        buttonBackground: '#E09ADA',
+        buttonBorder: '#000000',
+        outputBorder: '#000000',
+        outputBackground: '#E0D09C',
+        outputText: '#000000',
+        actionBorder: '#000000',
+        actionBackground: '#E0D09C',
+        actionText: '#000000'
+    },
+    theme3: {
+        bodyBackground: '#905971',
+        buttonBackground: '#905971',
+        buttonBorder: '#ffffff',
+        outputBorder: '#000000',
+        outputBackground: '#F9D372',
+        outputText: '#000000',
+        actionBorder: '#000000',
+        actionBackground: '#F9D372',
+        actionText: '#000000'
+    }
+};
+
+// Function to apply the selected color theme
+function applyColorTheme(theme) {
+    console.log('Applying color theme:', theme);
+    const colors = colorThemes[theme];
+    // document.body.style.backgroundColor = colors.bodyBackground;
+    document.querySelectorAll('.mic-btn button').forEach(btn => {
+        btn.style.backgroundColor = colors.buttonBackground;
+        btn.style.borderColor = colors.buttonBorder;
+    });
+    document.getElementById('output').style.borderColor = colors.outputBorder;
+    document.getElementById('output').style.backgroundColor = colors.outputBackground;
+    document.getElementById('output').style.color = colors.outputText;
+    document.getElementById('action').style.borderColor = colors.actionBorder;
+    document.getElementById('action').style.backgroundColor = colors.actionBackground;
+    document.getElementById('action').style.color = colors.actionText;
+    // document.getElementById('mic-btn').style.color = colors.bodyBackground;
+}
+
+</script>
+</head>
+<body>
+
+<div class="lang">
+  <div class="language">
+  <span class="lang-text">Please Select A Language: </span>
+  <span class="lang-dropdown">
+<select id="language">
+    <option value="en">English</option>
+    <option value="hi">Hindi</option>
+    <option value="mr">Marathi</option>   
+    <option value="gu">Gujarati</option>
+    <option value="pa">Punjabi</option>
+    <option value="sd">Sindhi</option>
+    <option value="bn">Bengali</option>
+    <option value="te">Telugu</option>
+    <option value="ta">Tamil</option>
+    <option value="ur">Urdu</option>
+
+  </select>
+  
+  </span></div>
+  <div class="color-buttons">
+    <button id="theme1"  onclick="applyColorTheme('theme1')">Theme 1</button>
+    <button id="theme2" onclick="applyColorTheme('theme2')">Theme 2</button>
+    <button id="theme3" onclick="applyColorTheme('theme3')">Theme 3</button>
+  </div>
+</div>
+
+<div class="mic-btn"><button onclick="startRecognition()"><i class="fas fa-microphone"></i></button></div>
+<div id="output"></div>
+<div id="action"></div>
+
+<script>
+var recognition;
+var isGreetingSpoken = false; // Flag to track whether the greeting message has been spoken
+var speechSpeed = 1.0; // Initial speech speed
+
+function startRecognition() {
+    var selectedLanguage = document.getElementById("language").value;
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = selectedLanguage;
+    recognition.continuous = false; // Prevent continuous recognition
+    recognition.interimResults = false; // Turn off interim results
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<div class='search-query'><b>Spoken Text: </b>" + transcript + "</div>";
+
+        if (isGreetingSpoken) { // Start recognizing commands only after the greeting message has been spoken
+            if (transcript.includes("wikipedia") || transcript.includes("विकिपीडिया") || transcript.includes("વિકિપીડિયા") || transcript.includes("ਵਿਕੀਪੀਡੀਆ") || transcript.includes("وڪيپيڊيا") || transcript.includes("উইকিপিডিয়া") || transcript.includes("వికీపీడియా") || transcript.includes("விக்கிப்பீடியா") || transcript.includes("ویکیپیڈیا")) {
+                getSearchQuery(selectedLanguage);
+            } else if (transcript.includes("ask") || transcript.includes("पूछिए") || transcript.includes("विचार") || transcript.includes("પૂછો") || transcript.includes("ਪੁੱਛੋ") || transcript.includes("پڇو") || transcript.includes("জিজ্ঞাসা") || transcript.includes("అడుగు") || transcript.includes("வினவு") || transcript.includes("پوچھنا")) {
+                getQuestion(selectedLanguage);
+            } 
+             else if (transcript.includes('help')) {
+                speak("Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.");
+            } else if (transcript.includes('increase speed')) {
+                speechSpeed += 2;
+                speak("Speech speed increased.");
+            } else if (transcript.includes('decrease speed')) {
+                speechSpeed -= 2;
+                speak("Speech speed decreased.");
+            } else if (transcript.includes('stop')) {
+                speakandstop("Execution aborted")
+                recognition.abort();
+            } else {
+                sendVoiceToPython(transcript);
+            }
+        }
+    };
+
+    if (!isGreetingSpoken) { // If the greeting message hasn't been spoken yet, speak it
+        // speak("Hello, I am your voice assistant. Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.");
+        speak("h")
+        isGreetingSpoken = true; // Set the flag to true indicating that the greeting message has been spoken
+    } else { // If the greeting message has already been spoken, start recognition directly
+        recognition.start();
+    }
+}
+
+function getSearchQuery(selectedLanguage) {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<div class='searchinig'><b>Search Query:</b> " + searchQuery + "</div>";
+        sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage);
+    };
+    document.getElementById("output").innerHTML += "<div class='instruction'><b>Say your search query for Wikipedia:</b></div>";
+    innerRecognition.start();
+}
+
+function getQuestion(selectedLanguage) {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<div class='instruction'><b>Question:</b> " + question + '</div>';
+        sendVoiceToPythonForGemini(question, selectedLanguage);
+    };
+    document.getElementById("output").innerHTML += "<div class='searching'><b>Ask your question:</b></div>";
+    innerRecognition.start();
+}
+
+
+
+function sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<div class='search-query'><b>Wikipedia Summary:</b> " + response.summary + "</div>";
+            // speak(response.summary); // Speak the Wikipedia summary
+            translateSummary(response.summary);
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<div class='search-query'><b>Response:</b> " + response.ai_response + "</div>";
+            speak(response.ai_response); // Speak the Gemini response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({ gemini: question, selected_language: selectedLanguage });
+    xhr.send(data);
+}
+
+function translateSummary(summary, selectedLanguage) {
+  
+  // Display the translated summary
+  document.getElementById("action").innerHTML = summary;
+  speak(summary);
+}
+
+function speak(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    utterance.onend = function() {
+        recognition.start(); // Start recognition after speaking is finished
+    };
+    window.speechSynthesis.speak(utterance);
+}
+
+function speakandstop(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    
+    window.speechSynthesis.speak(utterance);
+}
+
+// Add this to your existing JavaScript code
+// document.addEventListener('keydown', function(event) {
+//     if (event.keyCode === 38) { // Up arrow key
+//         changeFontSize(2); // Increase font size by 2px
+//     } else if (event.keyCode === 40) { // Down arrow key
+//         changeFontSize(-2); // Decrease font size by 2px
+//     }
+// });
+
+// Add this to your existing JavaScript code
+document.addEventListener('keydown', function(event) {
+    if (event.keyCode === 38) { // Up arrow key
+        changeFontSize(2); // Increase font size by 2px
+    } else if (event.keyCode === 40) { // Down arrow key
+        changeFontSize(-2); // Decrease font size by 2px
+    }
+});
+
+function changeFontSize(changeAmount) {
+    var body = document.querySelector('body');
+    var currentSize = parseFloat(window.getComputedStyle(body, null).getPropertyValue('font-size'));
+    var newSize = currentSize + changeAmount;
+    body.style.fontSize = newSize + 'px';
+
+    // Adjust font size of buttons
+    var buttons = document.querySelectorAll('button');
+    buttons.forEach(function(button) {
+        var currentButtonSize = parseFloat(window.getComputedStyle(button, null).getPropertyValue('font-size'));
+        var newButtonSize = currentButtonSize + changeAmount;
+        button.style.fontSize = newButtonSize + 'px';
+    });
+
+    // Adjust font size of select and option elements
+    var select = document.getElementById('language');
+    var options = select.querySelectorAll('option');
+    select.style.fontSize = newSize + 'px'; // Apply the same font size as body to select element
+    options.forEach(function(option) {
+        option.style.fontSize = newSize + 'px'; // Apply the same font size as body to option elements
+    });
+
+    // Adjust font size of div elements
+    var divs = document.querySelectorAll('div');
+    divs.forEach(function(div) {
+        var currentDivSize = parseFloat(window.getComputedStyle(div, null).getPropertyValue('font-size'));
+        var newDivSize = currentDivSize + changeAmount;
+        div.style.fontSize = newDivSize + 'px';
+    });
+
+    // Adjust font size of the microphone icon
+    var microphoneIcon = document.querySelector('.mic-btn button i');
+    var currentIconSize = parseFloat(window.getComputedStyle(microphoneIcon, null).getPropertyValue('font-size'));
+    var newIconSize = currentIconSize + changeAmount;
+    microphoneIcon.style.fontSize = newIconSize + 'px';
+}
+
+
+</script>
+</body>
+</html>  -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<select id="language">
+    <option value="en">English</option>
+    <option value="hi">Hindi</option>
+    <option value="mr">Marathi</option>
+    <option value="gu">Gujarati</option>
+    <option value="pa">Punjabi</option>
+    <option value="sd">Sindhi</option>
+    <option value="bn">Bengali</option>
+    <option value="te">Telugu</option>
+    <option value="ta">Tamil</option>
+    <option value="ur">Urdu</option>
+    
+  </select>
+  
+<button onclick="startRecognition()">Start Voice Input</button>
+
+<script>
+var recognition;
+var isGreetingSpoken = false; // Flag to track whether the greeting message has been spoken
+var speechSpeed = 1.0; // Initial speech speed
+
+function startRecognition() {
+    // var selectedLanguage = "en"
+    var selectedLanguage = document.getElementById("language").value;
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = selectedLanguage;
+    recognition.continuous = false; // Prevent continuous recognition
+    recognition.interimResults = false; // Turn off interim results
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (isGreetingSpoken) { // Start recognizing commands only after the greeting message has been spoken
+            if (transcript.includes("wikipedia") || transcript.includes("विकिपीडिया") || transcript.includes("વિકિપીડિયા") || transcript.includes("ਵਿਕੀਪੀਡੀਆ") || transcript.includes("وڪيپيڊيا") || transcript.includes("উইকিপিডিয়া") || transcript.includes("వికీపీడియా") || transcript.includes("விக்கிப்பீடியா") || transcript.includes("ویکیپیڈیا")) {
+                getSearchQuery(selectedLanguage);
+            } else if (transcript.includes("ask") || transcript.includes("पूछिए") || transcript.includes("विचार") || transcript.includes("પૂછો") || transcript.includes("ਪੁੱਛੋ") || transcript.includes("پڇو") || transcript.includes("জিজ্ঞাসা") || transcript.includes("అడుగు") || transcript.includes("வினவு") || transcript.includes("پوچھنا")) {
+                getQuestion(selectedLanguage);
+            } 
+             else if (transcript.includes('help')) {
+                speak("Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.");
+            } else if (transcript.includes('increase speed')) {
+                speechSpeed += 2;
+                speak("Speech speed increased.");
+            } else if (transcript.includes('decrease speed')) {
+                speechSpeed -= 2;
+                speak("Speech speed decreased.");
+            } else if (transcript.includes('stop')) {
+                speakandstop("Execution aborted")
+                recognition.abort();
+            } else {
+                sendVoiceToPython(transcript);
+            }
+        }
+    };
+
+    if (!isGreetingSpoken) { // If the greeting message hasn't been spoken yet, speak it
+        // speak("Hello, I am your voice assistant. Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.");
+        speak("h")
+        isGreetingSpoken = true; // Set the flag to true indicating that the greeting message has been spoken
+    } else { // If the greeting message has already been spoken, start recognition directly
+        recognition.start();
+    }
+}
+
+function getSearchQuery(selectedLanguage) {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    innerRecognition.start();
+}
+
+function getQuestion(selectedLanguage) {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = selectedLanguage;
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question, selectedLanguage);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    innerRecognition.start();
+}
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the AI response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({'gemini': transcript });
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+            // speak(response.summary); // Speak the Wikipedia summary
+            translateSummary(response.summary);
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery, 'selected_language': selectedLanguage });
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question, selectedLanguage) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the Gemini response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({ 'gemini': question, 'selected_language': selectedLanguage });
+    xhr.send(data);
+}
+
+function translateSummary(summary, selectedLanguage) {
+  
+  // Display the translated summary
+  document.getElementById("action").innerHTML = summary;
+  speak(summary);
+}
+
+function speak(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    utterance.onend = function() {
+        recognition.start(); // Start recognition after speaking is finished
+    };
+    window.speechSynthesis.speak(utterance);
+}
+
+function speakandstop(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    
+    window.speechSynthesis.speak(utterance);
+}
+</script>
+</body>
+</html> -->
+
+<!-- all commands working including stop -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="startRecognition()">Start Voice Input</button>
+
+<script>
+var recognition;
+var isGreetingSpoken = false; // Flag to track whether the greeting message has been spoken
+var speechSpeed = 1.0; // Initial speech speed
+
+function startRecognition() {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = false; // Prevent continuous recognition
+    recognition.interimResults = false; // Turn off interim results
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (isGreetingSpoken) { // Start recognizing commands only after the greeting message has been spoken
+            if (transcript.includes('wikipedia')) {
+                getSearchQuery();
+            } else if (transcript.includes('ask')) {
+                getQuestion();
+            } else if (transcript.includes('help')) {
+                speak("Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.");
+            } else if (transcript.includes('increase speed')) {
+                speechSpeed += 2;
+                speak("Speech speed increased.");
+            } else if (transcript.includes('decrease speed')) {
+                speechSpeed -= 0.1;
+                speak("Speech speed decreased.");
+            } else if (transcript.includes('stop')) {
+                speakandstop("Execution aborted")
+                recognition.abort();
+            } else {
+                sendVoiceToPython(transcript);
+            }
+        }
+    };
+
+    if (!isGreetingSpoken) { // If the greeting message hasn't been spoken yet, speak it
+        // speak("Hello, I am your voice assistant. Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.");
+        speak("h")
+        isGreetingSpoken = true; // Set the flag to true indicating that the greeting message has been spoken
+    } else { // If the greeting message has already been spoken, start recognition directly
+        recognition.start();
+    }
+}
+
+function getSearchQuery() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    innerRecognition.start();
+}
+
+function getQuestion() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    innerRecognition.start();
+}
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the AI response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+            speak(response.summary); // Speak the Wikipedia summary
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the Gemini response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": question});
+    xhr.send(data);
+}
+
+function speak(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    utterance.onend = function() {
+        recognition.start(); // Start recognition after speaking is finished
+    };
+    window.speechSynthesis.speak(utterance);
+}
+
+function speakandstop(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    
+    window.speechSynthesis.speak(utterance);
+}
+</script>
+</body>
+</html> -->
+
+<!-- works -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="startRecognition()">Start Voice Input</button>
+
+<script>
+var recognition;
+var isGreetingSpoken = false; // Flag to track whether the greeting message has been spoken
+var speechSpeed = 1.0; // Initial speech speed
+
+function startRecognition() {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = false; // Prevent continuous recognition
+    recognition.interimResults = false; // Turn off interim results
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (isGreetingSpoken) { // Start recognizing commands only after the greeting message has been spoken
+            if (transcript.includes('wikipedia')) {
+                getSearchQuery();
+            } else if (transcript.includes('ask')) {
+                getQuestion();
+            } else if (transcript.includes('help')) {
+                speak("Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.");
+            } else if (transcript.includes('increase speed')) {
+                speechSpeed += 2;
+                speak("Speech speed increased.");
+            } else if (transcript.includes('decrease speed')) {
+                speechSpeed -= 0.1;
+                speak("Speech speed decreased.");
+            } else if (transcript.includes('stop')) {
+                speak("Execution aborted")
+                recognition.abort();
+            } else {
+                sendVoiceToPython(transcript);
+            }
+        }
+    };
+
+    if (!isGreetingSpoken) { // If the greeting message hasn't been spoken yet, speak it
+        // speak("Hello, I am your voice assistant. Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed and to abort the recognition, say 'stop'.");
+        speak("h")
+        isGreetingSpoken = true; // Set the flag to true indicating that the greeting message has been spoken
+    } else { // If the greeting message has already been spoken, start recognition directly
+        recognition.start();
+    }
+}
+
+function getSearchQuery() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    innerRecognition.start();
+}
+
+function getQuestion() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    innerRecognition.start();
+}
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the AI response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+            speak(response.summary); // Speak the Wikipedia summary
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the Gemini response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": question});
+    xhr.send(data);
+}
+
+function speak(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    utterance.onend = function() {
+        recognition.start(); // Start recognition after speaking is finished
+    };
+    window.speechSynthesis.speak(utterance);
+}
+</script>
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="startRecognition()">Start Voice Input</button>
+
+<script>
+var recognition;
+var isGreetingSpoken = false; // Flag to track whether the greeting message has been spoken
+var speechSpeed = 1.0; // Initial speech speed
+
+function startRecognition() {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = false; // Prevent continuous recognition
+    recognition.interimResults = false; // Turn off interim results
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (isGreetingSpoken) { // Start recognizing commands only after the greeting message has been spoken
+            if (transcript.includes('wikipedia')) {
+                getSearchQuery();
+            } else if (transcript.includes('ask')) {
+                getQuestion();
+            } else if (transcript.includes('help')) {
+                speak("Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything. To increase speed, say 'increase speed'. To decrease speed, say 'decrease speed'.");
+            } else if (transcript.includes('increase speed')) {
+                speechSpeed += 2;
+                speak("Speech speed increased.");
+            } else if (transcript.includes('decrease speed')) {
+                speechSpeed -= 0.1;
+                speak("Speech speed decreased.");
+            } else {
+                sendVoiceToPython(transcript);
+            }
+        }
+    };
+
+    if (!isGreetingSpoken) { // If the greeting message hasn't been spoken yet, speak it
+        speak("Hello, I am your voice assistant. Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything.");
+        isGreetingSpoken = true; // Set the flag to true indicating that the greeting message has been spoken
+    } else { // If the greeting message has already been spoken, start recognition directly
+        recognition.start();
+    }
+}
+
+function getSearchQuery() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    innerRecognition.start();
+}
+
+function getQuestion() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    innerRecognition.start();
+}
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the AI response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+            speak(response.summary); // Speak the Wikipedia summary
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the Gemini response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": question});
+    xhr.send(data);
+}
+
+function speak(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechSpeed; // Set the speech speed
+    utterance.onend = function() {
+        recognition.start(); // Start recognition after speaking is finished
+    };
+    window.speechSynthesis.speak(utterance);
+}
+</script>
+</body>
+</html> -->
+
+<!-- works both with initial command -->
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="startRecognition()">Start Voice Input</button>
+
+<script>
+var recognition;
+var isGreetingSpoken = false; // Flag to track whether the greeting message has been spoken
+
+function startRecognition() {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = false; // Prevent continuous recognition
+    recognition.interimResults = false; // Turn off interim results
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (isGreetingSpoken) { // Start recognizing commands only after the greeting message has been spoken
+            if (transcript.includes('wikipedia')) {
+                getSearchQuery();
+            } else if (transcript.includes('ask')) {
+                getQuestion();
+            } else {
+                sendVoiceToPython(transcript);
+            }
+        }
+    };
+
+    if (!isGreetingSpoken) { // If the greeting message hasn't been spoken yet, speak it
+        speak("Hello, I am your voice assistant. Say 'help' for help, 'Wikipedia' for getting information from Wikipedia, and 'ask' to ask anything, increase speed to increase speed, decrease speed to decrease speed.");
+        isGreetingSpoken = true; // Set the flag to true indicating that the greeting message has been spoken
+    } else { // If the greeting message has already been spoken, start recognition directly
+        recognition.start();
+    }
+}
+
+function getSearchQuery() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    innerRecognition.start();
+}
+
+function getQuestion() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    innerRecognition.start();
+}
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the AI response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+            speak(response.summary); // Speak the Wikipedia summary
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the Gemini response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": question});
+    xhr.send(data);
+}
+
+function speak(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.onend = function() {
+        recognition.start(); // Start recognition after speaking is finished
+    };
+    window.speechSynthesis.speak(utterance);
+}
+</script>
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="startRecognition()">Start Voice Input</button>
+
+<script>
+var recognition;
+
+function startRecognition() {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = false; // Prevent continuous recognition
+    recognition.interimResults = false; // Turn off interim results
+
+
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (transcript.includes('wikipedia')) {
+            getSearchQuery();
+        } else if (transcript.includes('ask')) {
+            getQuestion();
+        } else {
+            sendVoiceToPython(transcript);
+        }
+    };
+
+    
+
+    recognition.start();
+}
+
+function getSearchQuery() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    innerRecognition.start();
+}
+
+function getQuestion() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.continuous = false;
+    innerRecognition.interimResults = false;
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    innerRecognition.start();
+}
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the AI response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+            speak(response.summary); // Speak the Wikipedia summary
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the Gemini response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": question});
+    xhr.send(data);
+}
+
+function speak(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    utterance.onend = function() {
+        startRecognition(); // Start recognition again after speaking is finished
+    };
+    window.speechSynthesis.speak(utterance);
+}
+</script>
+</body>
+</html>
+
+ -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="startRecognition()">Start Voice Input</button>
+
+<script>
+var recognition;
+
+function startRecognition() {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (transcript.includes('wikipedia')) {
+            getSearchQuery();
+        } else if (transcript.includes('ask')) {
+            getQuestion();
+        } else {
+            sendVoiceToPython(transcript);
+        }
+    };
+    recognition.start();
+}
+
+function getSearchQuery() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    innerRecognition.start();
+}
+
+function getQuestion() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    innerRecognition.start();
+}
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the AI response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+            speak(response.summary); // Speak the Wikipedia summary
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+            speak(response.ai_response); // Speak the Gemini response
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": question});
+    xhr.send(data);
+}
+
+function speak(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+}
+</script>
+</body>
+</html>
+ -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="startRecognition()">Start Voice Input</button>
+
+<script>
+var recognition;
+
+function startRecognition() {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (transcript.includes('wikipedia')) {
+            getSearchQuery();
+        } else if (transcript.includes('ask')) {
+            getQuestion();
+        } else {
+            sendVoiceToPython(transcript);
+        }
+    };
+    recognition.start();
+}
+
+function getSearchQuery() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    innerRecognition.start();
+}
+
+function getQuestion() {
+    recognition.stop();
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    innerRecognition.start();
+}
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+            startRecognition(); // Start recognition again after response
+        }
+    };
+    var data = JSON.stringify({"gemini": question});
+    xhr.send(data);
+}
+</script>
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="runSpeechRecognition()">Start Voice Input</button>
+
+<script>
+var recognition;
+var shouldRestart = true;
+
+async function runSpeechRecognition() {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (transcript.includes('wikipedia')) {
+            getSearchQuery();
+        } else if (transcript.includes('ask') && transcript === 'ask') {
+            getQuestion();
+        } else {
+            sendVoiceToPython(transcript);
+        }
+    };
+    recognition.onend = function(event) {
+        if (shouldRestart) {
+            runSpeechRecognition(); // Restart speech recognition when it ends
+        }
+    };
+    recognition.start();
+}
+
+function getSearchQuery() {
+    shouldRestart = false; // Disable automatic restart to avoid overlap
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    innerRecognition.start();
+}
+
+function getQuestion() {
+    shouldRestart = false; // Disable automatic restart to avoid overlap
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    innerRecognition.start();
+}
+
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+            // Convert AI Response to speech
+            speak(response.ai_response);
+            shouldRestart = true; // Allow automatic restart after response
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+            // Convert Wikipedia Summary to speech
+            speak(response.summary);
+            shouldRestart = true; // Allow automatic restart after response
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+            // Convert Gemini Response to speech
+            speak(response.ai_response);
+            shouldRestart = true; // Allow automatic restart after response
+        }
+    };
+    var data = JSON.stringify({"gemini": question});
+    xhr.send(data);
+}
+
+function speak(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+}
+</script>
+</body>
+</html>
+ -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="runSpeechRecognition()">Start Voice Input</button>
+
+<script>
+var recognition;
+
+async function runSpeechRecognition() {
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (transcript.includes('wikipedia')) {
+            getSearchQuery();
+        } else if (transcript.includes('ask') && transcript === 'ask') {
+            getQuestion();
+        } else {
+            sendVoiceToPython(transcript);
+        }
+    };
+    recognition.onend = function(event) {
+        runSpeechRecognition(); // Restart speech recognition when it ends
+    };
+    recognition.start();
+}
+
+function getSearchQuery() {
+    recognition.stop(); // Stop speech recognition to avoid overlap
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    innerRecognition.start();
+}
+
+function getQuestion() {
+    recognition.stop(); // Stop speech recognition to avoid overlap
+    var innerRecognition = new webkitSpeechRecognition();
+    innerRecognition.lang = 'en-US';
+    innerRecognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    innerRecognition.start();
+}
+
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+            // Convert AI Response to speech
+            speak(response.ai_response);
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+            // Convert Wikipedia Summary to speech
+            speak(response.summary);
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+            // Convert Gemini Response to speech
+            speak(response.ai_response);
+        }
+    };
+    var data = JSON.stringify({"gemini": question});
+    xhr.send(data);
+}
+
+function speak(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+}
+</script>
+</body>
+</html>
+ -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="runSpeechRecognition()">Start Voice Input</button>
+
+<script>
+async function runSpeechRecognition() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (transcript.includes('wikipedia')) {
+            getSearchQuery();
+        } else if (transcript.includes('ask') && transcript === 'ask') {
+            getQuestion();
+        } else {
+            sendVoiceToPython(transcript);
+        }
+    };
+    recognition.start();
+}
+
+function getSearchQuery() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    recognition.start();
+}
+
+function getQuestion() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    recognition.start();
+}
+
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+            // Convert AI Response to speech
+            speak(response.ai_response);
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+            // Convert Wikipedia Summary to speech
+            speak(response.summary);
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+            // Convert Gemini Response to speech
+            speak(response.ai_response);
+        }
+    };
+    var data = JSON.stringify({"gemini": question});
+    xhr.send(data);
+}
+
+function speak(text) {
+    var utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+}
+</script>
+</body>
+</html>
+ -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="runSpeechRecognition()">Start Voice Input</button>
+
+<script>
+async function runSpeechRecognition() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (transcript.includes('wikipedia')) {
+            getSearchQuery();
+        } else if (transcript.includes('ask') && transcript === 'ask') {
+            getQuestion();
+        } else {
+            sendVoiceToPython(transcript);
+        }
+    };
+    recognition.start();
+}
+
+function getSearchQuery() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    recognition.start();
+}
+
+// function getQuestion() {
+//     var recognition = new webkitSpeechRecognition();
+//     recognition.lang = 'en-US';
+//     recognition.onresult = function(event) {
+//         var question = event.results[0][0].transcript.trim();
+//         document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+//         sendVoiceToPythonForGemini(question);
+//     };
+//     document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+//     recognition.start();
+// }
+
+
+
+function getQuestion() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        console.log('Transcript for "ask" command:', question); // Log the transcript
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    recognition.start();
+}
+
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+        }
+    };
+    var data = JSON.stringify({"gemini": question});
+    xhr.send(data);
+}
+</script>
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="runSpeechRecognition()">Start Voice Input</button>
+
+<script>
+async function runSpeechRecognition() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (transcript.includes('wikipedia')) {
+            getSearchQuery();
+        } else if (transcript.includes('ask')) {
+            getQuestion();
+        } else {
+            sendVoiceToPython(transcript);
+        }
+    };
+    recognition.start();
+}
+
+function getSearchQuery() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query for Wikipedia:</b>";
+    recognition.start();
+}
+
+function getQuestion() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var question = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Question:</b> " + question;
+        sendVoiceToPythonForGemini(question);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Ask your question:</b>";
+    recognition.start();
+}
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForGemini(question) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Gemini Response:</small> " + response.ai_response;
+        }
+    };
+    var data = JSON.stringify({"gemini": question});
+    xhr.send(data);
+}
+</script>
+</body>
+</html>
+
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="runSpeechRecognition()">Start Voice Input</button>
+
+<script>
+async function runSpeechRecognition() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript.trim().toLowerCase();
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+
+        if (transcript.includes('wikipedia')) {
+            getSearchQuery();
+        } else {
+            sendVoiceToPython(transcript);
+        }
+    };
+    recognition.start();
+}
+
+function getSearchQuery() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var searchQuery = event.results[0][0].transcript.trim();
+        document.getElementById("output").innerHTML += "<br><b>Search Query:</b> " + searchQuery;
+        sendVoiceToPythonForWikipedia(searchQuery);
+    };
+    document.getElementById("output").innerHTML += "<br><b>Say your search query:</b>";
+    recognition.start();
+}
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForWikipedia(searchQuery) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+        }
+    };
+    var data = JSON.stringify({"search_query": searchQuery});
+    xhr.send(data);
+}
+</script>
+</body>
+</html>
+
+ -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="runSpeechRecognition()">Get Gemini Summary</button>
+<button onclick="getWikipediaSummary()">Get Wikipedia Summary</button>
+
+<script>
+async function runSpeechRecognition() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript;
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+        sendVoiceToPython(transcript);
+    };
+    recognition.start();
+}
+
+async function getWikipediaSummary() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript;
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+        sendVoiceToPythonForSummary(transcript);
+    };
+    recognition.start();
+}
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/gemini");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+        }
+    };
+    var data = JSON.stringify({"gemini": transcript});
+    xhr.send(data);
+}
+
+function sendVoiceToPythonForSummary(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/wiki_summary");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>Wikipedia Summary:</small> " + response.summary;
+        }
+    };
+    var data = JSON.stringify({"search_query": transcript});
+    xhr.send(data);
+}
+</script>
+</body>
+</html> -->
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition with AI Response</title>
+</head>
+<body>
+<div id="output"></div>
+<div id="action"></div>
+<button onclick="runSpeechRecognition()">Start Speech Recognition</button>
+
+<script>
+async function runSpeechRecognition() {
+    var recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.onresult = function(event) {
+        var transcript = event.results[0][0].transcript;
+        document.getElementById("output").innerHTML = "<b>Spoken Text:</b> " + transcript;
+        sendVoiceToPython(transcript);
+    };
+    recognition.start();
+}
+
+function sendVoiceToPython(transcript) {
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:5000/voice_input");
+    xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            var response = JSON.parse(xhr.responseText);
+            document.getElementById("action").innerHTML = "<small>AI Response:</small> " + response.ai_response;
+        }
+    };
+    var data = JSON.stringify({"voice_input": transcript});
+    xhr.send(data);
+}
+</script>
+</body>
+</html> -->
+-->
